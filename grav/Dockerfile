@@ -1,4 +1,4 @@
-# `time eatmydata docker buildx build --progress=plain --tag disc/grav .`
+# `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
 #
 # ---- base image ----
 FROM dunglas/frankenphp:php8.3-alpine AS base
@@ -61,9 +61,6 @@ WORKDIR /app
 # ---- grav ----
 FROM base AS release
 
-# COPY --chown=www-data:www-data --from=npm_build /app/public/build ./public/build
-# COPY --chown=www-data:www-data --from=php_build /app/vendor ./vendor
-# COPY --chown=www-data:www-data . .
 # install grav
 RUN set -ex && \
     mkdir -p /config && \
