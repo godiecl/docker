@@ -1,7 +1,7 @@
 # `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
 #
 # ---- base image ----
-FROM dunglas/frankenphp:php8.3-alpine AS base
+FROM dunglas/frankenphp:php8.4-alpine AS base
 
 # must utilities
 RUN set -ex && \
