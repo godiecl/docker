@@ -28,7 +28,8 @@ RUN set -ex && \
     echo 'opcache.enable_file_override=1'; \
     echo 'opcache.fast_shutdown=1'; \
     echo 'opcache.interned_strings_buffer=8'; \
-    echo 'opcache.jit_buffer_size=256M'; \
+    echo 'opcache.jit=tracing'; \
+    echo 'opcache.jit_buffer_size=128M'; \
     echo 'opcache.max_accelerated_files=4000'; \
     echo 'opcache.memory_consumption=128'; \
     echo 'opcache.optimization_level=0x7FFFBFFF'; \
@@ -57,6 +58,9 @@ ENV ENV=/root/.profile
 # set working directory
 WORKDIR /app
 
+# opcache gui
+COPY opcache.php /app
+
 #
 # ---- grav ----
 FROM base AS release
@@ -64,8 +68,7 @@ FROM base AS release
 # install grav
 RUN set -ex && \
     mkdir -p /config && \
-    mkdir -p /app/public && \
-    curl -o /tmp/grav.zip -SL https://getgrav.org/download/core/grav-admin/latest && \
+    curl -o /tmp/grav.zip -SL https://getgrav.org/download/core/grav-admin/1.8.0-beta.4?testing && \
     unzip -q /tmp/grav.zip -d /tmp/grav && \
     mv /tmp/grav/grav-admin/* /app/ && \
     rm -fr /tmp/* && \
