@@ -1,0 +1,24 @@
+---
+#  docker run -it --name php --rm -p 9000:9000 -v ./app:/app liguana/php
+name: php
+
+services:
+  grav:
+    image: liguana/php
+    container_name: php
+    hostname: php
+    expose:
+      - "9000:9000"
+#    volumes:
+#      - ./app:/app
+    restart: unless-stopped
+    healthcheck:
+      test: curl --fail http://localhost:9000/ping || exit 1
+      interval: 30s
+      retries: 3
+      start_period: 10s
+
+# networks:
+#  default:
+#    name: npm
+#    external: true
