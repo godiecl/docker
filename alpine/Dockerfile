@@ -1,5 +1,5 @@
 # Build command:
-# time eatmydata docker buildx build --build-arg BUILD_DATE=$(git show -s --format=%ct) --build-arg VCS_REF=$(git rev-parse --short HEAD) --progress=plain --tag 4h/alpine .
+# time eatmydata docker buildx build --build-arg BUILD_DATE=$(git show -s --format=%ct) --build-arg VCS_REF=$(git rev-parse --short HEAD) --progress=plain --tag 4h/alpine:3.21.3 .
 #
 # ---- base image ----
 FROM scratch
