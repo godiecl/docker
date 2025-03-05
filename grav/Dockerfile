@@ -35,9 +35,8 @@ RUN set -ex && \
     echo 'opcache.optimization_level=0x7FFFBFFF'; \
     echo 'opcache.revalidate_freq=5'; \
     echo 'opcache.save_comments=1'; \
-    echo 'expose_php=off'; \
     echo 'opcache.validate_timestamps=0'; \
-    } > $PHP_INI_DIR/conf.d/opcache-recommended.ini && \
+    } > $PHP_INI_DIR/conf.d/opcache.ini && \
     { \
     echo 'error_reporting = E_ERROR | E_WARNING | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_RECOVERABLE_ERROR'; \
     echo 'display_errors = Off'; \
@@ -49,6 +48,11 @@ RUN set -ex && \
     echo 'ignore_repeated_source = Off'; \
     echo 'html_errors = Off'; \
     } > $PHP_INI_DIR/conf.d/error-logging.ini && \
+    { \
+    echo 'upload_max_filesize=256M'; \
+    echo 'post_max_size = 512M'; \
+    echo 'expose_php=off'; \
+    } > $PHP_INI_DIR/conf.d/defauls.ini && \
     rm -fr /var/cache/apk/*
 
 # set timezone
