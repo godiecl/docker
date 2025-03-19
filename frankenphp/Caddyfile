@@ -1,0 +1,39 @@
+# caddy global options
+{
+   frankenphp
+    log {
+        format console
+        level debug # info
+    }
+    # disable admin
+    admin off
+    metrics /metrics {
+        disable_openmetrics
+    }
+}
+
+# the server
+:80 {
+    @static {
+        file
+        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff
+    }
+
+    # the main app
+    root * /app
+
+    # the ping
+    respond /ping 204
+
+    # compress
+    # encode zstd br gzip
+
+    # headers
+    header +X-Hosted-By "Cuatro Hache Spa"
+
+    # enable static and php files
+    php_server {
+       try_files {path} index.php
+       root /app
+    }
+}
