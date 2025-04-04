@@ -1,6 +1,6 @@
 # caddy global options
 {
-   frankenphp
+    frankenphp
     log {
         format console
         level debug # info
