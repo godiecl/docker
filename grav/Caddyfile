@@ -30,6 +30,9 @@
     # the ping
     respond /ping 204
 
+    # compress
+    # encode zstd br gzip
+
     # Begin - Security
     # deny all direct access for these folders
     rewrite /(\.git|cache|bin|logs|backups|tests)/.* /403
