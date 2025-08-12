@@ -36,7 +36,6 @@ RUN set -ex; \
     install-php-extensions \
         gd \
         intl \
-        opcache \
         yaml \
         zip \
     && \
