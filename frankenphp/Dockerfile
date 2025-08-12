@@ -130,6 +130,22 @@ RUN set -ex; \
     # enable compression for better performance
     # encode zstd br gzip
 
+    # Begin - Security
+    # deny all direct access for these folders
+    rewrite /(\.git|cache|bin|logs|backups|tests)/.* /403
+
+    # deny running scripts inside core system folders
+    rewrite /(system|vendor)/.*\.(txt|xml|md|html|htm|shtml|shtm|yaml|yml|php|php2|php3|php4|php5|phar|phtml|pl|py|cgi|twig|sh|bat)$ /403
+
+    # deny running scripts inside user folder
+    rewrite /user/.*\.(txt|md|yaml|yml|php|php2|php3|php4|php5|phar|phtml|pl|py|cgi|twig|sh|bat)$ /403
+
+    # deny access to specific files in the root folder
+    rewrite /(LICENSE\.txt|composer\.lock|composer\.json|nginx\.conf|web\.config|htaccess\.txt|\.htaccess) /403
+
+    respond /403 403
+    ## End - Security
+
     header {
         -Server
         header X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LIGUANA)"
