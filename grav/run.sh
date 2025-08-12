@@ -51,4 +51,4 @@ sed -i 's/enable_auto_updates_check: true/enable_auto_updates_check: false/' /co
 #    /config
 
 # run!
-frankenphp run --config /etc/caddy/Caddyfile
+frankenphp run --config /etc/frankenphp/Caddyfile
