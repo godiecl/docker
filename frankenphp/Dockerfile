@@ -106,6 +106,15 @@ RUN set -ex; \
     metrics /metrics {
         disable_openmetrics
     }
+
+    server {
+          # request timeout settings
+          timeouts {
+              read 30s
+              write 1m
+              idle 2m
+          }
+    }
 }
 
 # Main server block
@@ -174,13 +183,6 @@ RUN set -ex; \
         handle {
             respond `{http.error.status_code} {http.error.status_text}`
         }
-    }
-
-    # request timeout settings
-    timeouts {
-        read 30s
-        write 1m
-        idle 2m
     }
 
 }
