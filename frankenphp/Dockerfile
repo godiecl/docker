@@ -14,6 +14,14 @@ FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
 ENV TZ=America/Santiago
 ENV ENV=/root/.profile
 
+# disable cgo checks
+ENV GODEBUG=cgocheck=0
+
+# RANKENPHP_THREADS = (2*CPU_COUNT) // by default
+# GOMEMLIMIT = MEMORY_LIMIT - (FRANKENPHP_THREADS * PHP_MEMORY_LIMIT)
+# 2000 - ((2*16) * 128) = -2096
+# ENV GOMEMLIMIT=
+
 # set working directory
 WORKDIR /app
 
