@@ -110,9 +110,10 @@ RUN set -ex; \
     servers {
           # request timeout settings
           timeouts {
-              read 30s
+              read_body 1m
+              read_header 10s
               write 1m
-              idle 2m
+              idle 1m
           }
     }
 }
