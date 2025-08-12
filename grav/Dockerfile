@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# `time eatmydata docker buildx build --progress=plain --tag 4h/grav .`
+# `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
 #
 ARG GRAV_VERSION=1.8.0-beta.4?testing
 
@@ -8,9 +8,11 @@ ARG GRAV_VERSION=1.8.0-beta.4?testing
 # FrankenPHP + Grav
 # -----------------------------------------------------------------------------
 FROM liguana/frankenphp:latest AS release
+ARG GRAV_VERSION
 
 # install grav
 RUN set -ex; \
+    apk add --no-cache --verbose bash && \
     mkdir -p /config && \
     curl -o /tmp/grav.zip -SL https://getgrav.org/download/core/grav-admin/${GRAV_VERSION} && \
     unzip -q /tmp/grav.zip -d /tmp/grav && \
