@@ -95,7 +95,7 @@ RUN set -ex; \
 
     frankenphp {
         num_threads 1
-        max_threads 8
+        max_threads 4
     }
 
     log {
