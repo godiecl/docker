@@ -2,11 +2,12 @@
 #
 # `time eatmydata docker buildx build --progress=plain --tag 4h/grav .`
 #
-ARG FRANKENPHP_VERSION=8.4.5
 ARG GRAV_VERSION=1.8.0-beta.4?testing
 
-# ---- base image ----
-FROM 4h/frankenphp:${FRANKENPHP_VERSION} AS release
+# -----------------------------------------------------------------------------
+# FrankenPHP + Grav
+# -----------------------------------------------------------------------------
+FROM liguana/frankenphp:latest AS release
 
 # install grav
 RUN set -ex; \
@@ -18,7 +19,6 @@ RUN set -ex; \
     (crontab -l; echo "* * * * * cd /app;/usr/local/bin/php bin/grav scheduler 1>> /dev/null 2>&1") | crontab -
 
 # configure webserver
-COPY Caddyfile /etc/caddy/Caddyfile
 COPY run.sh /app
 RUN set -ex && \
     chmod +x /app/run.sh && \
