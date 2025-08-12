@@ -107,7 +107,7 @@ RUN set -ex; \
         disable_openmetrics
     }
 
-    server {
+    servers {
           # request timeout settings
           timeouts {
               read 30s
