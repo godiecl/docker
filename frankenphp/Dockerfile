@@ -162,35 +162,38 @@ RUN set -ex; \
     # -------------------------------------------------------------------------
     # deny all direct access for these folders
     @forbidden_dirs {
-        path_regexp forbidden_dirs ^/(?:.git|cache|bin|logs|backups|tests)(?:/.*)?$
+        file
+        path_regexp forbidden_dirs (?i)^/(?:.git|cache|bin|logs|backups|tests)(?:/|$)
     }
-    respond @forbidden_dirs 403
+    respond @forbidden_dirs "Forbidden: dirs" 403
 
     # deny access to dotfiles
     @dotfiles {
+        file
         path_regexp dotfiles (?i)^/(?:.?/)?.[^/]+(?:/.)?$
     }
-    respond @dotfiles 403
+    respond @dotfiles "Forbidden: dot" 403
 
     # deny access to sensitive files
     @sensitive_files {
+        file
         path_regexp sensitive_files (?i)^/.*(?:LICENSE.txt|composer.json|composer.lock|nginx.conf|web.config|htaccess.txt|.htaccess|.env)$
     }
-    respond @sensitive_files 403
+    respond @sensitive_files "Forbidden: files" 403
 
     # deny access to specific file types in core system and vendor folders
     @blocked_core_scripts {
         file
         path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
     }
-    respond @blocked_core_scripts 403
+    respond @blocked_core_scripts "Forbidden: core" 403
 
     # deny access to specific file types in user folder
     @blocked_user_scripts {
         file
         path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
     }
-    respond @blocked_user_scripts 403
+    respond @blocked_user_scripts "Forbidden: user" 403
 
     # -------------------------------------------------------------------------
     header {
