@@ -134,39 +134,69 @@ RUN set -ex; \
     # health check endpoint
     respond /ping 204
 
-    # static file handling with cache control
+    # -------------------------------------------------------------------------
+    # static files
     @static {
         file
-        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.ttf *.eot *.pdf *.txt
+        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.pdf *.txt
     }
     handle @static {
         header Cache-Control "public, max-age=86400"  # Cache for 24 hours
         file_server
     }
 
+    # fonts files
+    @fonts {
+        file
+        path *.woff *.woff2 *.ttf .eot
+    }
+    handle @fonts {
+        header Access-Control-Allow-Origin ""
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+    }
+
     # enable compression for better performance
-    # encode zstd br gzip
+    encode zstd br gzip
 
-    # Begin - Security
+    # -------------------------------------------------------------------------
     # deny all direct access for these folders
-    rewrite /(\.git|cache|bin|logs|backups|tests)/.* /403
+    @forbidden_dirs {
+        path_regexp forbidden_dirs ^/(?:.git|cache|bin|logs|backups|tests)(?:/.*)?$
+    }
+    respond @forbidden_dirs 403
 
-    # deny running scripts inside core system folders
-    rewrite /(system|vendor)/.*\.(txt|xml|md|html|htm|shtml|shtm|yaml|yml|php|php2|php3|php4|php5|phar|phtml|pl|py|cgi|twig|sh|bat)$ /403
+    # deny access to dotfiles
+    @dotfiles {
+        path_regexp dotfiles (?i)^/(?:.?/)?.[^/]+(?:/.)?$
+    }
+    respond @dotfiles 403
 
-    # deny running scripts inside user folder
-    rewrite /user/.*\.(txt|md|yaml|yml|php|php2|php3|php4|php5|phar|phtml|pl|py|cgi|twig|sh|bat)$ /403
+    # deny access to sensitive files
+    @sensitive_files {
+        path_regexp sensitive_files (?i)^/.*(?:LICENSE.txt|composer.json|composer.lock|nginx.conf|web.config|htaccess.txt|.htaccess|.env)$
+    }
+    respond @sensitive_files 403
 
-    # deny access to specific files in the root folder
-    rewrite /(LICENSE\.txt|composer\.lock|composer\.json|nginx\.conf|web\.config|htaccess\.txt|\.htaccess) /403
+    # deny access to specific file types in core system and vendor folders
+    @blocked_core_scripts {
+        file
+        path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+    }
+    respond @blocked_core_scripts 403
 
-    respond /403 403
-    ## End - Security
+    # deny access to specific file types in user folder
+    @blocked_user_scripts {
+        file
+        path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+    }
+    respond @blocked_user_scripts 403
 
+    # -------------------------------------------------------------------------
     header {
         -Server
-        header X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LIGUANA)"
-        header X-Powered-By "Departamento de Ingenieria de Sistemas y Computacion, UCN, Antofagasta"
+        +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LIGUANA)"
+        +X-Powered-By "Departamento de Ingenieria de Sistemas y Computacion, UCN, Antofagasta"
     }
 
     # PHP handling
