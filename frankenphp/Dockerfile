@@ -182,6 +182,7 @@ RUN set -ex; \
     @blocked_core_scripts {
         file
         path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+    }
     respond @blocked_core_scripts 403
 
     # deny access to specific file types in user folder
