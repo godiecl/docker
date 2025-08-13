@@ -163,18 +163,30 @@ RUN set -ex; \
     # deny all direct access for these folders
     @forbidden_dirs {
         path_regexp forbidden_dirs ^/(?:.git|cache|bin|logs|backups|tests)(?:/.*)?$
+        log {
+            output file /var/log/forbidden_dirs.log
+            format json
+        }
     }
     respond @forbidden_dirs 403
 
     # deny access to dotfiles
     @dotfiles {
         path_regexp dotfiles (?i)^/(?:.?/)?.[^/]+(?:/.)?$
+        log {
+            output file /var/log/dot_files.log
+            format json
+        }
     }
     respond @dotfiles 403
 
     # deny access to sensitive files
     @sensitive_files {
         path_regexp sensitive_files (?i)^/.*(?:LICENSE.txt|composer.json|composer.lock|nginx.conf|web.config|htaccess.txt|.htaccess|.env)$
+        log {
+            output file /var/log/sensitive_files.log
+            format json
+        }
     }
     respond @sensitive_files 403
 
@@ -182,6 +194,10 @@ RUN set -ex; \
     @blocked_core_scripts {
         file
         path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+        log {
+            output file /var/log/blocked_core_scripts.log
+            format json
+        }
     }
     respond @blocked_core_scripts 403
 
@@ -189,13 +205,17 @@ RUN set -ex; \
     @blocked_user_scripts {
         file
         path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+        log {
+            output file /var/log/blocked_user_scripts.log
+            format json
+        }
     }
     respond @blocked_user_scripts 403
 
     # -------------------------------------------------------------------------
     header {
         -Server
-        +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LIGUANA)"
+        +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LiGUANA): https//liguana.disc.cl"
         +X-Powered-By "Departamento de Ingenieria de Sistemas y Computacion, UCN, Antofagasta"
     }
 
