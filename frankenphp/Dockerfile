@@ -167,7 +167,7 @@ RUN set -ex; \
     log {
         output file /var/log/forbidden_dirs.log
         format json
-        @match @forbidden_dirs
+        match @forbidden_dirs
     }
     respond @forbidden_dirs 403
 
@@ -201,7 +201,7 @@ RUN set -ex; \
     log {
         output file /var/log/blocked_core_scripts.log
         format json
-        @match @blocked_core_scripts
+        match @blocked_core_scripts
     }
     respond @blocked_core_scripts 403
 
@@ -213,7 +213,7 @@ RUN set -ex; \
     log {
         output file /var/log/blocked_user_scripts.log
         format json
-        @match @blocked_user_scripts
+        match @blocked_user_scripts
     }
     respond @blocked_user_scripts 403
 
