@@ -5,7 +5,7 @@
 #   docker run --rm -it -p 9000:9000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
 
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
-ARG PHP_VERSION=8.4.11
+ARG PHP_VERSION=8.4.12
 
 # ---- release image -----------------------------------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
@@ -234,6 +234,16 @@ EOF
 RUN set -ex; \
     rm -f /usr/local/bin/phpdbg; \
     rm -f /usr/local/bin/php-cgi; \
+    rm -fr /usr/local/lib/php/PEAR; \
+    rm -fr /usr/local/lib/php/build; \
+    rm -fr /usr/local/lib/php/test; \
+    rm -fr /usr/local/lib/php/.registry; \
+    rm -fr /usr/local/lib/php/doc; \
+    rm -fr /usr/local/lib/php/Archive; \
+    rm -fr /usr/local/lib/php/Structures; \
+    rm -fr /usr/local/lib/php/.channels; \
+    rm -fr /usr/local/lib/php/XML; \
+    rm -fr /usr/local/include/php/ext; \
     rm -fr /var/cache/apk/* /tmp/*
 
 # configuration
