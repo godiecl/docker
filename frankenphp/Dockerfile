@@ -243,7 +243,8 @@ RUN set -ex; \
     rm -fr /usr/local/lib/php/Structures; \
     rm -fr /usr/local/lib/php/.channels; \
     rm -fr /usr/local/lib/php/XML; \
-    rm -fr /usr/local/include/php/ext; \
+    rm -fr /usr/local/include/php; \
+    rm -fr /usr/src/php.tar.xz*; \
     rm -fr /var/cache/apk/* /tmp/*
 
 # configuration
