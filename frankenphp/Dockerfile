@@ -49,7 +49,7 @@ RUN set -ex; \
     && \
     echo '<?php phpinfo();' > /app/index.php && \
     cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini && \
-    rm -rf /var/cache/apk/* /tmp/*
+    rm -rf /var/cache/apk/* /tmp/* /app/public
 
 # write opcache config
 RUN set -ex; \
