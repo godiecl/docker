@@ -96,6 +96,8 @@ EOF
 RUN set -ex; \
     cat > /etc/frankenphp/Caddyfile <<-'EOF'
 {
+    skip_install_trust
+
     auto_https off
     admin off
 
