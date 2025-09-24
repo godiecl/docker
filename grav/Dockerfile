@@ -10,7 +10,7 @@ ARG GRAV_VERSION=1.8.0-beta.7?testing
 FROM liguana/frankenphp:latest AS release
 ARG GRAV_VERSION
 
-# install grav
+# install grav (bash needed for grav cli and run.sh)
 RUN set -ex; \
     apk add --no-cache --verbose bash && \
     mkdir -p /config && \
@@ -20,8 +20,10 @@ RUN set -ex; \
     rm -fr /tmp/* && \
     (crontab -l; echo "* * * * * cd /app;/usr/local/bin/php bin/grav scheduler 1>> /dev/null 2>&1") | crontab -
 
-# configure webserver
+# startup script
 COPY run.sh /app
+
+# configure caddy
 RUN set -ex && \
     chmod +x /app/run.sh && \
     frankenphp fmt --overwrite /etc/caddy/Caddyfile && \
