@@ -254,6 +254,9 @@ RUN set -ex; \
     frankenphp version && \
     frankenphp build-info
 
+# copy the opcache.php to /app for testing
+COPY opcache.php /app/opcache.php
+
 # serve
 EXPOSE 80
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
