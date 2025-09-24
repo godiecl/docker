@@ -2,7 +2,7 @@
 #
 # `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
 #
-ARG GRAV_VERSION=1.8.0-beta.4?testing
+ARG GRAV_VERSION=1.8.0-beta.7?testing
 
 # -----------------------------------------------------------------------------
 # FrankenPHP + Grav
