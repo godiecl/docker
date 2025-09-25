@@ -172,7 +172,7 @@ RUN set -ex; \
     # deny access to dotfiles
     @dotfiles {
         file
-        path_regexp dotfiles (?i)^/(?:.?/)?.[^/]+(?:/.)?$
+        path_regexp dotfiles ^/(?:[^/]+/)*\.[^/]+$
     }
     respond @dotfiles "Forbidden: dot" 403
 
