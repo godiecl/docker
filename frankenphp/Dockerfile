@@ -73,24 +73,24 @@ EOF
 # write logging config
 RUN set -ex; \
     cat > $PHP_INI_DIR/conf.d/error-logging.ini <<-'EOF'
-        error_reporting = E_ERROR | E_WARNING | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_RECOVERABLE_ERROR
         display_errors = Off
         display_startup_errors = Off
-        log_errors = On
         error_log = /dev/stderr
-        log_errors_max_len = 1024
+        error_reporting = E_ERROR | E_WARNING | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_RECOVERABLE_ERROR
+        html_errors = Off
         ignore_repeated_errors = On
         ignore_repeated_source = Off
-        html_errors = Off
+        log_errors = On
+        log_errors_max_len = 1024
 EOF
 
 # write default config
 RUN set -ex; \
     cat > $PHP_INI_DIR/conf.d/defaults.ini <<-'EOF'
-        upload_max_filesize=256M
-        post_max_size=512M
-        memory_limit=256M
         expose_php=off
+        memory_limit=256M
+        post_max_size=512M
+        upload_max_filesize=256M
 EOF
 
 # write frankenphp server config
