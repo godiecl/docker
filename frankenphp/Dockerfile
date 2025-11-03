@@ -58,13 +58,14 @@ RUN set -ex; \
         opcache.enable_cli=1
         opcache.enable_file_override=1
         opcache.fast_shutdown=1
-        opcache.interned_strings_buffer=8
+        opcache.interned_strings_buffer=16
         opcache.jit=tracing
         opcache.jit_buffer_size=128M
-        opcache.max_accelerated_files=4000
+        opcache.max_accelerated_files=5000
+        opcache.max_wasted_percentage=10
         opcache.memory_consumption=128
         opcache.optimization_level=0x7FFFBFFF
-        opcache.revalidate_freq=5
+        opcache.revalidate_freq=60
         opcache.save_comments=1
         opcache.validate_timestamps=0
 EOF
