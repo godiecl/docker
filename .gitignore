@@ -12,6 +12,7 @@
 .idea/**/php.xml
 .idea/**/inspectionProfiles
 .idea/**/laravel-idea.xml
+.idea/**/copilot.*
 
 # AWS User-specific
 .idea/**/aws.xml
