@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1
+# build with:
+#   time eatmydata docker buildx build --progress=plain --tag liguana/grav .
+# run with:
+#   docker run --rm -it -p 9000:9000 -v /tmp:/tmp --name grav liguana/grav
 #
-# `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
-#
+# https://getgrav.org/downloads
 ARG GRAV_VERSION=1.8.0-beta.29?testing
 
 # -----------------------------------------------------------------------------
