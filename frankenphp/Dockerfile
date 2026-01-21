@@ -3,7 +3,7 @@
 #   time eatmydata docker buildx build --progress=plain --tag liguana/frankenphp .
 # run with:
 #   docker run --rm -it -p 9000:9000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
-
+#
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG PHP_VERSION=8.4.17
 
@@ -42,6 +42,9 @@ RUN set -ex; \
     echo 'alias ll="ls --color=auto -alF"' >> /root/.profile && \
     echo 'alias ls="ls --color=auto -aF"' >> /root/.profile && \
     install-php-extensions \
+        apcu \
+        bcmath \
+        exif \
         gd \
         intl \
         yaml \
