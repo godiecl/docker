@@ -2,7 +2,7 @@
 #
 # `time eatmydata docker buildx build --progress=plain --tag liguana/grav .`
 #
-ARG GRAV_VERSION=1.8.0-beta.18?testing
+ARG GRAV_VERSION=1.8.0-beta.29?testing
 
 # -----------------------------------------------------------------------------
 # FrankenPHP + Grav
@@ -11,7 +11,7 @@ FROM liguana/frankenphp:latest AS release
 ARG GRAV_VERSION
 
 # install grav (bash needed for grav cli and run.sh)
-RUN set -ex; \
+RUN set -eux; \
     apk add --no-cache --verbose bash && \
     mkdir -p /config && \
     curl -o /tmp/grav.zip -SL https://getgrav.org/download/core/grav-admin/${GRAV_VERSION} && \
@@ -24,7 +24,7 @@ RUN set -ex; \
 COPY run.sh /app
 
 # configure caddy
-RUN set -ex && \
+RUN set -eux && \
     chmod +x /app/run.sh && \
     frankenphp fmt --overwrite /etc/caddy/Caddyfile && \
     setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp
