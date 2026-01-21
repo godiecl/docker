@@ -5,7 +5,7 @@
 #   docker run --rm -it -p 9000:9000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
 
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
-ARG PHP_VERSION=8.4.14
+ARG PHP_VERSION=8.4.17
 
 # ---- release image -----------------------------------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
