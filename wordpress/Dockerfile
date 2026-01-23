@@ -17,7 +17,7 @@ ENV WP_DEBUG=false
 ENV FORCE_HTTPS=0
 
 COPY --from=wp /usr/src/wordpress /app
-# COPY --from=wp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/
+COPY wp-config.php /app
 
 VOLUME ["/app/wp-content"]
 
