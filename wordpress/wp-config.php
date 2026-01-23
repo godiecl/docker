@@ -8,6 +8,9 @@ define('DB_DIR',         '/app/wp-content/database');
 define('DB_FILE',        'db.sqlite');
 define('DB_NAME',        'wordpress');
 define('FS_METHOD',      'direct');
+define('WP_SITEURL',     'https://ciara.cl');
+define('WP_HOME',        'https://ciara.cl');
+$_SERVER['HTTPS'] = 'on';
 
 define('AUTH_KEY',         'b(Ft7f1{4vZ(!(#w +QOW~LJk!Ta{W*Pd(E%;xm$6!AW!?fNm^qk7NoN4}DJz%<6');
 define('SECURE_AUTH_KEY',  'AB+hbE>Dp$z`Fi*[mf9SI-M~VSG8w@:CBJQoewKye.W.ved@Il&|nBlv(]RjK-N6');
