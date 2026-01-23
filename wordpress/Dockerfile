@@ -17,17 +17,13 @@ ENV WP_DEBUG=false
 ENV FORCE_HTTPS=0
 
 COPY --from=wp /usr/src/wordpress /app
-COPY --from=wp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/
+# COPY --from=wp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/
 
 VOLUME ["/app/wp-content"]
 
 RUN set -eux; \
     apk add --no-cache --verbose bash && \
     mkdir -p /app/wp-content/cache && \
-    sed -i \
-        -e 's/\[ "$1" = '\''php-fpm'\'' \]/\[\[ "$1" == frankenphp* \]\]/g' \
-        -e 's/php-fpm/frankenphp/g' \
-        /usr/local/bin/docker-entrypoint.sh && \
     curl -fSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp && \
         chmod +x /usr/local/bin/wp
 
@@ -35,7 +31,7 @@ EXPOSE 9000
 
 # lightweight healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -fS http://127.0.0.1:9000/ || exit 1
+  CMD curl -fS http://127.0.0.1:9000/ping || exit 1
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
