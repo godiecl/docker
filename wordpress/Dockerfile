@@ -25,7 +25,14 @@ RUN set -eux; \
     apk add --no-cache --verbose bash git && \
     mkdir -p /app/wp-content/cache && \
     curl -fSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp && \
-        chmod +x /usr/local/bin/wp
+        chmod +x /usr/local/bin/wp && \
+    export SQLITE_PLUGIN_VERSION=$(curl -sI "https://github.com/WordPress/sqlite-database-integration/releases/latest" | grep -i location | awk -F'/' '{print $NF}' | tr -d '\r') && \
+        mkdir -p /app/wp-content/mu-plugins/sqlite-database-integration && \
+        curl -L "https://github.com/WordPress/sqlite-database-integration/archive/refs/tags/${SQLITE_PLUGIN_VERSION}.tar.gz" | \
+        tar xz --strip-components=1 -C /app/wp-content/mu-plugins/sqlite-database-integration && \
+    mv "/app/wp-content/mu-plugins/sqlite-database-integration/db.copy" "/app/wp-content/db.php" && \
+        sed -i "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#/app/wp-content/mu-plugins/sqlite-database-integration#" "/app/wp-content/db.php" && \
+        sed -i "s#{SQLITE_PLUGIN}#/app/wp-content/mu-plugins/sqlite-database-integration/load.php#" "/app/wp-content/db.php"
 
 EXPOSE 9000
 
