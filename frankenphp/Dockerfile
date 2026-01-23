@@ -47,6 +47,7 @@ RUN set -ex; \
         exif \
         gd \
         intl \
+        mysqli \
         pdo_mysql \
         yaml \
         zip \
