@@ -1,0 +1,19 @@
+---
+#  docker run -it --name wordpress --rm -p 9000:9000 -v ./wp-content:/app/wp-content liguana/wordpress
+name: wordpress
+
+services:
+  wordpress:
+    image: liguana/wordpress
+    container_name: wordpress
+    hostname: wordpress
+    expose:
+      - "9000:9000"
+    volumes:
+      - ./wp-content:/app/wp-content
+    restart: unless-stopped
+
+networks:
+  default:
+    name: npm
+    external: true
