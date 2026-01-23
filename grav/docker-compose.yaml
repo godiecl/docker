@@ -22,3 +22,9 @@ networks:
   default:
     name: npm
     external: true
+
+wp config create --dbname=testing --dbuser=wp --dbpass=securepswd --extra-php <<PHP
+define('DATABASE_TYPE','sqlite');
+define('DB_DIR', '/app/wp-content/database');
+define('DB_FILE', 'db.sqlite');
+PHP
