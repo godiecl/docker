@@ -22,7 +22,7 @@ COPY wp-config.php /app
 VOLUME ["/app/wp-content"]
 
 RUN set -eux; \
-    apk add --no-cache --verbose bash git && \
+    apk add --no-cache --verbose git && \
     mkdir -p /app/wp-content/cache && \
     curl -fSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp && \
         chmod +x /usr/local/bin/wp && \
