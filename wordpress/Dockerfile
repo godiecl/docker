@@ -22,7 +22,6 @@ COPY wp-config.php /app
 VOLUME ["/app/wp-content"]
 
 RUN set -eux; \
-    install-php-extensions mysqli && \
     apk add --no-cache --verbose bash && \
     mkdir -p /app/wp-content/cache && \
     curl -fSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp && \
