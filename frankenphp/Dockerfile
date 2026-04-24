@@ -44,11 +44,10 @@ RUN set -ex; \
     install-php-extensions \
         apcu \
         bcmath \
+        calendar \
         exif \
         gd \
         intl \
-        mysqli \
-        pdo_mysql \
         yaml \
         zip \
     && \
