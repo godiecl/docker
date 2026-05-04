@@ -61,7 +61,6 @@ RUN set -ex; \
         opcache.enable=1
         opcache.enable_cli=1
         opcache.enable_file_override=1
-        opcache.fast_shutdown=1
         opcache.interned_strings_buffer=16
         opcache.jit=tracing
         opcache.jit_buffer_size=128M
@@ -134,7 +133,7 @@ RUN set -ex; \
 }
 
 # Main server block
-:9000 {
+:80 {
     # root directory
     root * /app/
 
@@ -155,7 +154,7 @@ RUN set -ex; \
     # fonts files
     @fonts {
         file
-        path *.woff *.woff2 *.ttf .eot
+        path *.woff *.woff2 *.ttf *.eot
     }
     handle @fonts {
         header Access-Control-Allow-Origin ""
