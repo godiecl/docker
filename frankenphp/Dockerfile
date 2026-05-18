@@ -108,7 +108,6 @@ RUN set -ex; \
 
     auto_https off
     admin off
-    persist_timeout 0s
 
     # debug
 
@@ -254,7 +253,7 @@ RUN set -ex; \
 
 # configuration
 RUN set -ex; \
-    mkdir -p /tmp/caddy && \
+mkdir -p /tmp/caddy/{config,data,locks} && \
     chown -R www-data:www-data /tmp/caddy && \
     tree --du -h -I 'node_modules|vendor' && \
     frankenphp fmt --overwrite /etc/frankenphp/Caddyfile && \
@@ -266,6 +265,10 @@ COPY --chown=www-data:www-data opcache.php /app/opcache.php
 
 # run unprivileged
 USER www-data:www-data
+
+# Caddy storage paths for unprivileged user
+ENV XDG_CONFIG_HOME=/tmp/caddy/config
+ENV XDG_DATA_HOME=/tmp/caddy/data
 
 # serve
 EXPOSE 8000
