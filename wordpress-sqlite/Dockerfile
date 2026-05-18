@@ -17,11 +17,15 @@ LABEL org.opencontainers.image.title="Wordpress-SQLite"
 LABEL org.opencontainers.image.version="${WORDPRESS_VERSION}"
 LABEL org.opencontainers.image.authors="LiGUANA"
 
+# environment variables
 ENV WP_DEBUG=false
 ENV FORCE_HTTPS=0
 
 COPY --from=wp --chown=www-data:www-data /usr/src/wordpress /app
-COPY --chown=www-data:www-data wp-config.php /app
+# COPY --chown=www-data:www-data wp-config.php /app
+
+# run privileged
+USER root
 
 VOLUME ["/app/wp-content"]
 
@@ -40,6 +44,10 @@ RUN set -eux; \
         sed -i "s#{SQLITE_PLUGIN}#/app/wp-content/mu-plugins/sqlite-database-integration/load.php#" "/app/wp-content/db.php" && \
         sed -i "s#<?php#<?php\ndefine( 'WP_SQLITE_AST_DRIVER', true );#" "/app/wp-content/db.php"
 
+# run unprivileged
+USER www-data:www-data
+
+# set the port
 EXPOSE 8000
 
 # lightweight healthcheck
