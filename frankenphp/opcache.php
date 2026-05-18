@@ -519,43 +519,13 @@ $dashboard = new OpCacheDashboard();
             <div class="card-content">
                 <div id="main-tabs" class="tabs is-boxed is-medium mb-4">
                     <ul>
-                        <li class="is-active" data-target="panel-status"><a>Status</a></li>
+                        <li class="is-active" data-target="panel-scripts"><a>Scripts (<?= $dashboard->getScriptCount(); ?>)</a></li>
+                        <li data-target="panel-status"><a>Status</a></li>
                         <li data-target="panel-config"><a>Configuration</a></li>
-                        <li data-target="panel-scripts"><a>Scripts (<?= $dashboard->getScriptCount(); ?>)</a></li>
                     </ul>
                 </div>
 
-                <div id="panel-status" class="tab-panel">
-                    <div class="table-scroll">
-                        <table class="table is-fullwidth is-striped is-hoverable is-narrow">
-                            <tbody>
-                            <?php foreach ($dashboard->getStatusRows() as $row): ?>
-                                <tr>
-                                    <th><?= e((string)$row['key']); ?></th>
-                                    <td><?= e((string)$row['value']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="panel-config" class="tab-panel is-hidden">
-                    <div class="table-scroll">
-                        <table class="table is-fullwidth is-striped is-hoverable is-narrow">
-                            <tbody>
-                            <?php foreach ($dashboard->getConfigRows() as $row): ?>
-                                <tr>
-                                    <th><?= e((string)$row['key']); ?></th>
-                                    <td><?= e((string)$row['value']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="panel-scripts" class="tab-panel is-hidden">
+                <div id="panel-scripts" class="tab-panel">
                     <div class="table-scroll">
                         <table class="table is-fullwidth is-striped is-hoverable is-narrow scripts-table">
                             <thead>
@@ -592,6 +562,37 @@ $dashboard = new OpCacheDashboard();
                         </table>
                     </div>
                 </div>
+
+                <div id="panel-status" class="tab-panel is-hidden">
+                    <div class="table-scroll">
+                        <table class="table is-fullwidth is-striped is-hoverable is-narrow">
+                            <tbody>
+                            <?php foreach ($dashboard->getStatusRows() as $row): ?>
+                                <tr>
+                                    <th><?= e((string)$row['key']); ?></th>
+                                    <td><?= e((string)$row['value']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="panel-config" class="tab-panel is-hidden">
+                    <div class="table-scroll">
+                        <table class="table is-fullwidth is-striped is-hoverable is-narrow">
+                            <tbody>
+                            <?php foreach ($dashboard->getConfigRows() as $row): ?>
+                                <tr>
+                                    <th><?= e((string)$row['key']); ?></th>
+                                    <td><?= e((string)$row['value']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
