@@ -56,7 +56,8 @@ RUN set -ex; \
         yaml \
         zip \
     && \
-    echo '<?php phpinfo();' > /app/index.php && \
+    echo '<?php phpinfo();' > /app/phpinfo.php && \
+    echo '<?php echo date('Y-m-d H:i:s');' > /app/index.php && \
     cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini && \
     rm -rf /var/cache/apk/* /tmp/* /app/public
 
@@ -204,6 +205,11 @@ RUN set -ex; \
     # protection for opcache.php
     basic_auth /opcache.php {
       admin $2a$14$MDoST6iwAvmMnULwQjrwnuymGqtDJnHUKO3/GPeBY7BSqzC6gKYLK
+    }
+
+    # protection for phpinfo.php
+    basic_auth /phpinfo.php {
+      admin $2a$14$DLmcKyxU2rdNWCQBFmHncuCOu/Si7h3DUmqM.bWBGN8WyZE5rpDu2
     }
 
     # -------------------------------------------------------------------------
