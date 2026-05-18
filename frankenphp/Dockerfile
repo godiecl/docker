@@ -7,12 +7,13 @@
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG PHP_VERSION=8.4.21
 
-LABEL org.opencontainers.image.title="FrankenPHP" \
-    org.opencontainers.image.version="${PHP_VERSION}" \
-    org.opencontainers.image.authors="LiGUANA"
-
 # ---- release image -----------------------------------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
+
+# the labels
+LABEL org.opencontainers.image.title="FrankenPHP"
+LABEL org.opencontainers.image.version="${PHP_VERSION}"
+LABEL org.opencontainers.image.authors="LiGUANA"
 
 # set container timezone
 ENV TZ=America/Santiago
