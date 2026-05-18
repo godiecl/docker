@@ -10,6 +10,7 @@ ARG WORDPRESS_VERSION=6.9.4
 # FrankenPHP + Wordpress
 FROM wordpress:${WORDPRESS_VERSION} AS wp
 FROM liguana/frankenphp:latest AS release
+ARG WORDPRESS_VERSION
 
 # the labels
 LABEL org.opencontainers.image.title="Wordpress-SQLite"
