@@ -7,6 +7,10 @@
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG PHP_VERSION=8.4.21
 
+LABEL org.opencontainers.image.title="FrankenPHP" \
+    org.opencontainers.image.version="${PHP_VERSION}" \
+    org.opencontainers.image.authors="LiGUANA"
+
 # ---- release image -----------------------------------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
 
@@ -39,7 +43,8 @@ RUN set -ex; \
       'alias ls="ls --color=auto -aF"' \
       > /etc/profile.d/10-aliases.sh && \
     chmod 0644 /etc/profile.d/10-aliases.sh && \
-    ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh && \
+    [ -f /etc/profile.d/color_prompt.sh.disabled ] && \
+      ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh || true && \
     install-php-extensions \
         apcu \
         bcmath \
@@ -63,11 +68,10 @@ RUN set -ex; \
         opcache.interned_strings_buffer=16
         opcache.jit=tracing
         opcache.jit_buffer_size=128M
-        opcache.max_accelerated_files=5000
+        opcache.max_accelerated_files=20000
         opcache.max_wasted_percentage=10
         opcache.memory_consumption=128
         opcache.optimization_level=0x7FFFBFFF
-        opcache.revalidate_freq=60
         opcache.save_comments=1
         opcache.validate_timestamps=0
 EOF
@@ -83,7 +87,7 @@ RUN set -ex; \
         ignore_repeated_errors = On
         ignore_repeated_source = Off
         log_errors = On
-        log_errors_max_len = 1024
+        log_errors_max_len = 4096
 EOF
 
 # write default config
@@ -113,11 +117,7 @@ RUN set -ex; \
 
     log {
         format console # json
-        level debug # debug info warn error fatal
-    }
-
-    metrics /metrics {
-        disable_openmetrics
+        level info # debug info warn error fatal
     }
 
     servers {
@@ -146,7 +146,10 @@ RUN set -ex; \
         path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.avif *.webp *.svg *.woff *.woff2 *.ttf *.eot *.pdf *.txt *.html
     }
     # cache static files for 24 hours
-    header @static Cache-Control "public, max-age=86400"
+    header @static {
+      header Cache-Control "public, max-age=86400"
+      file_server
+    }
 
     # fonts files
     @fonts {
@@ -165,8 +168,7 @@ RUN set -ex; \
     # -------------------------------------------------------------------------
     # deny all direct access for these folders
     @forbidden_dirs {
-        file
-        path_regexp forbidden_dirs (?i)^/(?:\.git|cache|bin|logs|backups|tests)(?:/|$)
+      path_regexp forbidden_dirs (?i)^/(?:\.git|cache|bin|logs|backups|tests)(?:/|$)
     }
     respond @forbidden_dirs "Forbidden: dirs" 403
 
@@ -197,6 +199,11 @@ RUN set -ex; \
         path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+\.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
     }
     respond @blocked_user_scripts "Forbidden: user" 403
+
+    # protection for opcache.php
+    basic_auth /opcache.php {
+      admin $2a$14$MDoST6iwAvmMnULwQjrwnuymGqtDJnHUKO3/GPeBY7BSqzC6gKYLK
+    }
 
     # -------------------------------------------------------------------------
     header {
