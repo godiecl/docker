@@ -58,7 +58,7 @@ RUN set -ex; \
         zip \
     && \
     echo '<?php phpinfo();' > /app/phpinfo.php && \
-    echo '<?php echo date('Y-m-d H:i:s');' > /app/index.php && \
+    echo "<?php echo date("Y-m-d H:i:s");" > /app/index.php && \
     cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini && \
     rm -rf /var/cache/apk/* /tmp/* /app/public
 
