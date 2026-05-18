@@ -108,6 +108,7 @@ RUN set -ex; \
 
     auto_https off
     admin off
+    persist_timeout 0s
 
     # debug
 
@@ -253,6 +254,8 @@ RUN set -ex; \
 
 # configuration
 RUN set -ex; \
+    mkdir -p /tmp/caddy && \
+    chown -R www-data:www-data /tmp/caddy && \
     tree --du -h -I 'node_modules|vendor' && \
     frankenphp fmt --overwrite /etc/frankenphp/Caddyfile && \
     frankenphp version && \
