@@ -1,34 +1,26 @@
 <?php
 declare(strict_types=1);
 
-define('THOUSAND_SEPARATOR', true);
-
 if (!extension_loaded('Zend OPcache')) {
     echo '<section style="padding:16px"><div style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:12px;border-radius:6px;">Zend OPcache extension is not loaded.</div></section>';
     return;
 }
 
-function e(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
+function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
 
 final class OpCacheDashboard
 {
     private array $configuration;
     private array $status;
-    private array $statusRows = array();
-    private array $configRows = array();
-    private array $scriptGroups = array();
+    private array $statusRows   = [];
+    private array $configRows   = [];
+    private array $scriptGroups = [];
+    private int   $scriptCount  = 0;
 
     public function __construct()
     {
-        $configuration = opcache_get_configuration();
-        $status = opcache_get_status();
-
-        $this->configuration = is_array($configuration) ? $configuration : array();
-        $this->status = is_array($status) ? $status : array();
-
+        $this->configuration = (array)(opcache_get_configuration() ?: []);
+        $this->status        = (array)(opcache_get_status() ?: []);
         $this->prepareStatusRows();
         $this->prepareConfigRows();
         $this->prepareScriptGroups();
@@ -36,240 +28,132 @@ final class OpCacheDashboard
 
     public function getPageTitle(): string
     {
-        $version = $this->configuration['version']['version'] ?? 'unknown';
-        return 'PHP ' . phpversion() . ' with OpCache ' . $version;
+        return 'PHP ' . phpversion() . ' with OpCache ' . ($this->configuration['version']['version'] ?? 'unknown');
     }
 
-    public function getStatusRows(): array
-    {
-        return $this->statusRows;
-    }
-
-    public function getConfigRows(): array
-    {
-        return $this->configRows;
-    }
-
-    public function getScriptGroups(): array
-    {
-        return $this->scriptGroups;
-    }
-
-    public function getScriptCount(): int
-    {
-        $scripts = $this->status['scripts'] ?? array();
-        return is_array($scripts) ? count($scripts) : 0;
-    }
+    public function getStatusRows(): array   { return $this->statusRows; }
+    public function getConfigRows(): array   { return $this->configRows; }
+    public function getScriptGroups(): array { return $this->scriptGroups; }
+    public function getScriptCount(): int    { return $this->scriptCount; }
 
     public function getGraphDataSetJson(): string
     {
-        $stats = $this->status['opcache_statistics'] ?? array();
-        $memory = $this->status['memory_usage'] ?? array();
+        $st = $this->status['opcache_statistics'] ?? [];
+        $m  = $this->status['memory_usage'] ?? [];
+        $c  = (int)($st['num_cached_keys'] ?? 0);
+        $mx = (int)($st['max_cached_keys'] ?? 0);
 
-        $cachedKeys = (int)($stats['num_cached_keys'] ?? 0);
-        $maxKeys = (int)($stats['max_cached_keys'] ?? 0);
-        $freeKeys = max(0, $maxKeys - $cachedKeys);
-
-        $dataset = array(
-            'memory' => array(
-                (float)($memory['used_memory'] ?? 0),
-                (float)($memory['free_memory'] ?? 0),
-                (float)($memory['wasted_memory'] ?? 0),
-            ),
-            'keys' => array($cachedKeys, $freeKeys),
-            'hits' => array(
-                (int)($stats['misses'] ?? 0),
-                (int)($stats['hits'] ?? 0),
-            ),
-            'TSEP' => THOUSAND_SEPARATOR ? 1 : 0,
-        );
-
-        return (string)json_encode($dataset, JSON_UNESCAPED_SLASHES);
-    }
-
-    public function getHumanUsedMemory(): string
-    {
-        return $this->formatBytes($this->status['memory_usage']['used_memory'] ?? 0);
-    }
-
-    public function getHumanFreeMemory(): string
-    {
-        return $this->formatBytes($this->status['memory_usage']['free_memory'] ?? 0);
-    }
-
-    public function getHumanWastedMemory(): string
-    {
-        return $this->formatBytes($this->status['memory_usage']['wasted_memory'] ?? 0);
-    }
-
-    public function getWastedMemoryPercentage(): string
-    {
-        return number_format((float)($this->status['memory_usage']['current_wasted_percentage'] ?? 0), 2);
+        return (string)json_encode([
+            'memory' => [(float)($m['used_memory'] ?? 0), (float)($m['free_memory'] ?? 0), (float)($m['wasted_memory'] ?? 0)],
+            'keys'   => [$c, max(0, $mx - $c)],
+            'hits'   => [(int)($st['misses'] ?? 0), (int)($st['hits'] ?? 0)],
+        ], JSON_UNESCAPED_SLASHES);
     }
 
     private function prepareStatusRows(): void
     {
         foreach ($this->status as $key => $value) {
-            if ($key === 'scripts') {
-                continue;
-            }
-
+            if ($key === 'scripts') continue;
             if (is_array($value)) {
-                foreach ($value as $nestedKey => $nestedValue) {
-                    $this->statusRows[] = array(
-                        'key' => (string)$nestedKey,
-                        'value' => $this->formatMetricValue((string)$nestedKey, $nestedValue),
-                    );
+                foreach ($value as $k => $v) {
+                    $this->statusRows[] = ['key' => (string)$k, 'value' => $this->formatMetricValue((string)$k, $v)];
                 }
                 continue;
             }
-
-            $this->statusRows[] = array(
-                'key' => (string)$key,
-                'value' => $this->normalizeValue($value),
-            );
+            $this->statusRows[] = ['key' => (string)$key, 'value' => $this->normalizeValue($value)];
         }
     }
 
     private function prepareConfigRows(): void
     {
-        $directives = $this->configuration['directives'] ?? array();
-        if (!is_array($directives)) {
-            return;
-        }
-
-        foreach ($directives as $key => $value) {
-            $formatted = (string)$key === 'opcache.memory_consumption'
-                ? $this->formatBytes((float)$value)
-                : $this->normalizeValue($value);
-
-            $this->configRows[] = array(
-                'key' => (string)$key,
-                'value' => $formatted,
-            );
+        foreach ((array)($this->configuration['directives'] ?? []) as $key => $value) {
+            $this->configRows[] = [
+                'key'   => (string)$key,
+                'value' => (string)$key === 'opcache.memory_consumption'
+                    ? $this->formatBytes((float)$value)
+                    : $this->normalizeValue($value),
+            ];
         }
     }
 
     private function prepareScriptGroups(): void
     {
-        $scripts = $this->status['scripts'] ?? array();
-        if (!is_array($scripts) || $scripts === array()) {
-            return;
-        }
+        $scripts = $this->status['scripts'] ?? [];
+        if (!is_array($scripts) || $scripts === []) return;
 
-        $dirs = array();
-        foreach ($scripts as $fullPath => $data) {
-            if (!is_array($data)) {
-                continue;
-            }
-
-            $path = (string)$fullPath;
-            $dir = dirname($path);
-            $file = basename($path);
-            $dirs[$dir][$file] = $data;
+        $dirs = [];
+        foreach ($scripts as $path => $data) {
+            if (is_array($data)) $dirs[dirname((string)$path)][basename((string)$path)] = $data;
         }
 
         ksort($dirs);
-        foreach ($dirs as &$files) {
-            ksort($files);
-        }
-        unset($files);
-
-        $groupId = 1;
+        $id = 1;
         foreach ($dirs as $dir => $files) {
+            ksort($files);
             $count = count($files);
-            $totalMemory = 0.0;
-            $rows = array();
+            $mem   = 0.0;
+            $rows  = [];
 
             foreach ($files as $file => $data) {
-                $hits = (int)($data['hits'] ?? 0);
-                $memory = (float)($data['memory_consumption'] ?? 0);
-                $totalMemory += $memory;
-
-                $rows[] = array(
-                    'groupId' => $groupId,
-                    'hits' => $this->formatNumber($hits),
-                    'memory' => $this->formatBytes($memory),
-                    'path' => $count > 1 ? (string)$file : ($dir . DIRECTORY_SEPARATOR . $file),
-                );
+                $m    = (float)($data['memory_consumption'] ?? 0);
+                $mem += $m;
+                $rows[] = [
+                    'groupId' => $id,
+                    'hits'    => $this->formatNumber((int)($data['hits'] ?? 0)),
+                    'memory'  => $this->formatBytes($m),
+                    'path'    => $count > 1 ? (string)$file : ($dir . DIRECTORY_SEPARATOR . $file),
+                ];
             }
 
-            $this->scriptGroups[] = array(
-                'id' => $groupId,
-                'dir' => (string)$dir,
-                'count' => $count,
+            $this->scriptGroups[] = [
+                'id'        => $id++,
+                'dir'       => (string)$dir,
+                'count'     => $count,
                 'fileLabel' => $count === 1 ? 'file' : 'files',
-                'memory' => $this->formatBytes($totalMemory),
-                'rows' => $rows,
-            );
-
-            $groupId++;
+                'memory'    => $this->formatBytes($mem),
+                'rows'      => $rows,
+            ];
+            $this->scriptCount += $count;
         }
     }
 
     private function formatMetricValue(string $key, mixed $value): string
     {
-        if (in_array($key, array('used_memory', 'free_memory', 'wasted_memory'), true)) {
+        if (in_array($key, ['used_memory', 'free_memory', 'wasted_memory'], true)) {
             return $this->formatBytes((float)$value);
         }
-
-        if (in_array($key, array('current_wasted_percentage', 'opcache_hit_rate', 'blacklist_miss_ratio'), true)) {
+        if (in_array($key, ['current_wasted_percentage', 'opcache_hit_rate', 'blacklist_miss_ratio'], true)) {
             return number_format((float)$value, 2) . '%';
         }
-
-        if (in_array($key, array('start_time', 'last_restart_time'), true)) {
-            $timestamp = (int)$value;
-            return $timestamp > 0 ? date(DATE_RFC822, $timestamp) : 'never';
+        if (in_array($key, ['start_time', 'last_restart_time'], true)) {
+            $ts = (int)$value;
+            return $ts > 0 ? date(DATE_RFC822, $ts) : 'never';
         }
-
         return $this->normalizeValue($value);
     }
 
     private function normalizeValue(mixed $value): string
     {
-        if ($value === true) {
-            return 'true';
-        }
-
-        if ($value === false) {
-            return 'false';
-        }
-
-        if ($value === null) {
-            return 'null';
-        }
-
-        if (is_int($value)) {
-            return $this->formatNumber($value);
-        }
-
-        if (is_float($value)) {
-            return rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.');
-        }
-
-        if (is_array($value)) {
-            return (string)json_encode($value, JSON_UNESCAPED_SLASHES);
-        }
-
-        return (string)$value;
+        return match (true) {
+            $value === true  => 'true',
+            $value === false => 'false',
+            $value === null  => 'null',
+            is_int($value)   => $this->formatNumber($value),
+            is_float($value) => rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.'),
+            is_array($value) => (string)json_encode($value, JSON_UNESCAPED_SLASHES),
+            default          => (string)$value,
+        };
     }
 
-    private function formatNumber(int $value): string
-    {
-        return THOUSAND_SEPARATOR ? number_format($value) : (string)$value;
-    }
+    private function formatNumber(int $v): string { return number_format($v); }
 
     private function formatBytes(float|int $bytes): string
     {
-        if ($bytes >= 1048576) {
-            return sprintf('%.2f MB', $bytes / 1048576);
-        }
-
-        if ($bytes >= 1024) {
-            return sprintf('%.2f kB', $bytes / 1024);
-        }
-
-        return sprintf('%d bytes', (int)$bytes);
+        return match (true) {
+            $bytes >= 1048576 => sprintf('%.2f MB', $bytes / 1048576),
+            $bytes >= 1024    => sprintf('%.2f kB', $bytes / 1024),
+            default           => sprintf('%d bytes', (int)$bytes),
+        };
     }
 }
 
@@ -284,178 +168,38 @@ $dashboard = new OpCacheDashboard();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
-        :root {
-            color-scheme: light;
-            --app-bg: #f5f7fb;
-            --app-border: #e5e7eb;
-            --app-text: #1f2937;
-        }
-
-        html,
-        body {
-            background: var(--app-bg);
-            color: var(--app-text);
-        }
-
-        .dashboard-header {
-            background: #fff;
-            border-bottom: 1px solid var(--app-border);
-        }
-
-        .dashboard-header .subtitle {
-            max-width: 52rem;
-        }
-
-        .dashboard-card {
-            border: 1px solid var(--app-border);
-            box-shadow: 0 10px 30px rgba(17, 24, 39, 0.05);
-            height: 100%;
-        }
-
-        .dashboard-card .card-content {
-            padding: 1.1rem;
-        }
-
-        .tabs.is-boxed a {
-            font-size: 0.88rem;
-            font-weight: 600;
-            padding: 0.5rem 0.8rem;
-        }
-
-        .tabs.is-boxed {
-            margin-bottom: 0.8rem !important;
-        }
-
-        .table-scroll {
-            max-height: 610px;
-            overflow: auto;
-        }
-
-        .table-scroll .table tbody th {
-            width: 38%;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .table-scroll .table tbody td {
-            text-align: right;
-            white-space: nowrap;
-        }
-
+        :root { color-scheme: light; --border: #e5e7eb; }
+        html, body { background: #f5f7fb; color: #1f2937; }
+        .dashboard-header { background: #fff; border-bottom: 1px solid var(--border); }
+        .dashboard-card { border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(17,24,39,.05); height: 100%; }
+        .dashboard-card .card-content { padding: 1.1rem; }
+        .tabs.is-boxed a { font-size: .88rem; font-weight: 600; padding: .5rem .8rem; }
+        .tabs.is-boxed { margin-bottom: .8rem !important; }
+        .table-scroll { max-height: 610px; overflow: auto; }
+        .table-scroll thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+        .table-scroll .table tbody th { width: 38%; text-align: left; white-space: nowrap; }
+        .table-scroll .table tbody td { text-align: right; white-space: nowrap; }
         .table-scroll .table th,
-        .table-scroll .table td {
-            font-size: 0.86rem;
-            padding: 0.38rem 0.45rem;
-            vertical-align: middle;
-        }
-
+        .table-scroll .table td { font-size: .86rem; padding: .38rem .45rem; vertical-align: middle; }
         .scripts-table th:last-child,
-        .scripts-table td:last-child {
-            text-align: left;
-            white-space: normal;
-            word-break: break-word;
-        }
-
-        .clickable {
-            cursor: pointer;
-        }
-
-        .graph-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 0.7rem;
-        }
-
-        .graph-canvas-wrap {
-            min-height: 220px;
-            height: 220px;
-            position: relative;
-        }
-
-        .chart-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.8rem;
-        }
-
-        .metric-card {
-            border: 1px solid var(--app-border);
-            border-radius: 10px;
-            padding: 0.7rem;
-            background: #fff;
-        }
-
-        .metric-card h3 {
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin: 0 0 0.45rem;
-            text-align: center;
-        }
-
-        .chart-title .title {
-            margin: 0;
-        }
-
+        .scripts-table td:last-child { text-align: left; white-space: normal; word-break: break-word; }
+        .clickable { cursor: pointer; }
+        .graph-layout { display: flex; flex-direction: column; gap: .7rem; }
+        .graph-canvas-wrap { min-height: 220px; height: 220px; position: relative; }
+        .chart-title { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+        .chart-title .title { margin: 0; }
+        .metric-grid { display: grid; grid-template-columns: 1fr; gap: .8rem; }
+        .metric-card { border: 1px solid var(--border); border-radius: 10px; padding: .7rem; background: #fff; }
+        .metric-card h3 { font-size: .85rem; font-weight: 700; margin: 0 0 .45rem; text-align: center; }
         .metric-values .table th,
-        .metric-values .table td {
-            font-size: 0.8rem;
-            padding: 0.32rem 0.4rem;
-            vertical-align: middle;
-        }
-
-        .metric-values .table th {
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .metric-values .table td {
-            text-align: right;
-        }
-
-        .runtime-metric-name {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            font-weight: 700;
-        }
-
-        .stats-table th {
-            text-align: left;
-            white-space: nowrap;
-            font-size: 0.84rem;
-            font-weight: 600;
-        }
-
-        .stats-table td {
-            text-align: right;
-            white-space: nowrap;
-            font-size: 0.84rem;
-        }
-
-        .stats-percent {
-            color: #6b7280;
-            font-size: 0.78rem;
-            margin-left: 0.35rem;
-        }
-
-        .stats-table th,
-        .stats-table td {
-            padding-top: 0.38rem;
-            padding-bottom: 0.38rem;
-        }
-
-        @media screen and (min-width: 1024px) {
-            .metric-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-        }
+        .metric-values .table td { font-size: .8rem; padding: .32rem .4rem; vertical-align: middle; }
+        .metric-values .table th { text-align: left; white-space: nowrap; }
+        .metric-values .table td { text-align: right; }
+        .runtime-metric-name { display: inline-flex; align-items: center; gap: .45rem; font-weight: 700; }
+        .stats-percent { color: #6b7280; font-size: .78rem; margin-left: .35rem; }
+        .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+        @media (min-width: 1024px) { .metric-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
     </style>
 </head>
 <body>
@@ -472,45 +216,20 @@ $dashboard = new OpCacheDashboard();
             <div class="card-content graph-layout">
                 <div class="chart-title">
                     <p class="title is-6">Runtime Dashboard</p>
-                    <span class="tag is-light">Live</span>
+                    <span class="live-dot" title="Live data"></span>
                 </div>
-
                 <div class="metric-grid">
+                    <?php foreach (['memory' => 'Memory', 'keys' => 'Keys', 'hits' => 'Hits'] as $k => $label): ?>
                     <div class="metric-card">
-                        <h3>Memory</h3>
-                        <div class="graph-canvas-wrap">
-                            <canvas id="chart-memory"></canvas>
-                        </div>
+                        <h3><?= $label; ?></h3>
+                        <div class="graph-canvas-wrap"><canvas id="chart-<?= $k; ?>"></canvas></div>
                         <div class="metric-values">
                             <table class="table is-fullwidth is-narrow mb-0">
-                                <tbody id="stats-memory"></tbody>
+                                <tbody id="stats-<?= $k; ?>"></tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="metric-card">
-                        <h3>Keys</h3>
-                        <div class="graph-canvas-wrap">
-                            <canvas id="chart-keys"></canvas>
-                        </div>
-                        <div class="metric-values">
-                            <table class="table is-fullwidth is-narrow mb-0">
-                                <tbody id="stats-keys"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="metric-card">
-                        <h3>Hits</h3>
-                        <div class="graph-canvas-wrap">
-                            <canvas id="chart-hits"></canvas>
-                        </div>
-                        <div class="metric-values">
-                            <table class="table is-fullwidth is-narrow mb-0">
-                                <tbody id="stats-hits"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
@@ -529,17 +248,11 @@ $dashboard = new OpCacheDashboard();
                     <div class="table-scroll">
                         <table class="table is-fullwidth is-striped is-hoverable is-narrow scripts-table">
                             <thead>
-                            <tr>
-                                <th>Hits</th>
-                                <th>Memory</th>
-                                <th>Path</th>
-                            </tr>
+                            <tr><th>Hits</th><th>Memory</th><th>Path</th></tr>
                             </thead>
                             <tbody>
                             <?php if ($dashboard->getScriptCount() === 0): ?>
-                                <tr>
-                                    <td colspan="3">No cached scripts found.</td>
-                                </tr>
+                                <tr><td colspan="3">No cached scripts found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($dashboard->getScriptGroups() as $group): ?>
                                     <?php if ((int)$group['count'] > 1): ?>
@@ -553,7 +266,7 @@ $dashboard = new OpCacheDashboard();
                                         <tr class="script-row group-<?= (int)$row['groupId']; ?>">
                                             <td><?= e((string)$row['hits']); ?></td>
                                             <td><?= e((string)$row['memory']); ?></td>
-                                            <td><?= e((string)$row['path']); ?></td>
+                                            <td title="<?= e((string)$row['path']); ?>"><?= e((string)$row['path']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
@@ -584,7 +297,7 @@ $dashboard = new OpCacheDashboard();
                             <tbody>
                             <?php foreach ($dashboard->getConfigRows() as $row): ?>
                                 <tr>
-                                    <th><?= e((string)$row['key']); ?></th>
+                                    <th><code><?= e((string)$row['key']); ?></code></th>
                                     <td><?= e((string)$row['value']); ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -592,201 +305,80 @@ $dashboard = new OpCacheDashboard();
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </section>
 
 <script>
-    const collapsedGroups = {};
+    const collapsed = {};
 
-    function toggleVisible(groupId) {
-        const rows = document.querySelectorAll('.group-' + groupId);
-        const header = document.getElementById('head-' + groupId);
-        if (!rows.length || !header) {
-            return;
-        }
-
-        const isCollapsed = collapsedGroups[groupId] === true;
-        rows.forEach(function (row) {
-            row.style.display = isCollapsed ? '' : 'none';
-        });
-        collapsedGroups[groupId] = !isCollapsed;
-        header.style.color = isCollapsed ? '' : '#9ca3af';
+    function toggleVisible(id) {
+        const rows = document.querySelectorAll('.group-' + id);
+        const head = document.getElementById('head-' + id);
+        if (!rows.length || !head) return;
+        collapsed[id] = !collapsed[id];
+        rows.forEach(r => r.style.display = collapsed[id] ? 'none' : '');
+        head.style.color = collapsed[id] ? '#9ca3af' : '';
     }
 
-    const tabs = document.querySelectorAll('#main-tabs li[data-target]');
-    const panels = document.querySelectorAll('.tab-panel');
-
-    tabs.forEach(function (tab) {
-        tab.addEventListener('click', function () {
-            const target = tab.getAttribute('data-target');
-            tabs.forEach(function (entry) {
-                entry.classList.remove('is-active');
-            });
-            panels.forEach(function (panel) {
-                panel.classList.add('is-hidden');
-            });
+    document.querySelectorAll('#main-tabs li[data-target]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#main-tabs li').forEach(t => t.classList.remove('is-active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('is-hidden'));
             tab.classList.add('is-active');
-            const targetPanel = document.getElementById(target);
-            if (targetPanel) {
-                targetPanel.classList.remove('is-hidden');
-            }
+            document.getElementById(tab.dataset.target)?.classList.remove('is-hidden');
         });
     });
 
     const dataset = <?= $dashboard->getGraphDataSetJson(); ?>;
 
-    function formatValue(value) {
-        if (dataset.TSEP === 1) {
-            return Number(value).toLocaleString('en-US');
-        }
-        return String(value);
-    }
+    const fmtBytes = v => v >= 1048576 ? (v / 1048576).toFixed(2) + ' MB' : v >= 1024 ? (v / 1024).toFixed(2) + ' kB' : Math.round(v) + ' bytes';
+    const fmtVal   = (metric, v) => metric === 'memory' ? fmtBytes(v) : Number(v).toLocaleString('en-US');
 
-    function formatBytes(bytes) {
-        const value = Number(bytes);
-        if (value >= 1048576) {
-            return (value / 1048576).toFixed(2) + ' MB';
-        }
-        if (value >= 1024) {
-            return (value / 1024).toFixed(2) + ' kB';
-        }
-        return Math.round(value) + ' bytes';
-    }
-
-    function formatMetricValue(metric, value) {
-        if (metric === 'memory') {
-            return formatBytes(value);
-        }
-        return formatValue(value);
-    }
-
-    const datasetMap = {
-        memory: {
-            title: 'Memory',
-            labels: ['Used', 'Free', 'Wasted'],
-            values: dataset.memory,
-            colors: ['#ef4444', '#10b981', '#f59e0b']
-        },
-        keys: {
-            title: 'Keys',
-            labels: ['Cached Keys', 'Free Keys'],
-            values: dataset.keys,
-            colors: ['#3b82f6', '#22c55e']
-        },
-        hits: {
-            title: 'Hits',
-            labels: ['Misses', 'Cache Hits'],
-            values: dataset.hits,
-            colors: ['#f97316', '#16a34a']
-        },
+    const metrics = {
+        memory: { labels: ['Used', 'Free', 'Wasted'],    values: dataset.memory, colors: ['#ef4444', '#10b981', '#f59e0b'], canvasId: 'chart-memory', statsId: 'stats-memory' },
+        keys:   { labels: ['Cached Keys', 'Free Keys'],  values: dataset.keys,   colors: ['#3b82f6', '#22c55e'],           canvasId: 'chart-keys',   statsId: 'stats-keys'   },
+        hits:   { labels: ['Misses', 'Cache Hits'],       values: dataset.hits,   colors: ['#f97316', '#16a34a'],           canvasId: 'chart-hits',   statsId: 'stats-hits'   },
     };
 
-    const dashboardCharts = {
-        memory: {
-            canvasId: 'chart-memory',
-            statsId: 'stats-memory'
-        },
-        keys: {
-            canvasId: 'chart-keys',
-            statsId: 'stats-keys'
-        },
-        hits: {
-            canvasId: 'chart-hits',
-            statsId: 'stats-hits'
-        }
-    };
-
-    function getPercentages(values) {
-        const total = values.reduce(function (sum, value) {
-            return sum + Number(value);
-        }, 0);
-
-        if (total <= 0) {
-            return values.map(function () {
-                return 0;
-            });
-        }
-
-        return values.map(function (value) {
-            return (Number(value) / total) * 100;
-        });
+    function pct(values) {
+        const total = values.reduce((s, v) => s + +v, 0);
+        return total > 0 ? values.map(v => (+v / total) * 100) : values.map(() => 0);
     }
 
-    const doughnutPercentLabels = {
-        id: 'doughnutPercentLabels',
-        afterDatasetsDraw: function (chartInstance) {
-            const values = chartInstance.data.datasets[0].data || [];
-            const percentages = getPercentages(values);
-            const meta = chartInstance.getDatasetMeta(0);
-            const ctx = chartInstance.ctx;
-
+    const percentPlugin = {
+        id: 'percentLabels',
+        afterDatasetsDraw(chart) {
+            const pcts = pct(chart.data.datasets[0].data);
+            const { ctx } = chart;
             ctx.save();
             ctx.font = '600 11px Inter, Segoe UI, Arial, sans-serif';
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-
-            meta.data.forEach(function (arc, index) {
-                const pct = percentages[index] || 0;
-                if (pct < 4) {
-                    return;
-                }
-
+            chart.getDatasetMeta(0).data.forEach((arc, i) => {
+                if (pcts[i] < 4) return;
                 const p = arc.getCenterPoint();
-                ctx.fillText(pct.toFixed(1) + '%', p.x, p.y);
+                ctx.fillText(pcts[i].toFixed(1) + '%', p.x, p.y);
             });
-
             ctx.restore();
         }
     };
 
-    function createDoughnutChart(metric) {
-        const selected = datasetMap[metric];
-        const canvas = document.getElementById(dashboardCharts[metric].canvasId);
-        return new Chart(canvas, {
+    Object.entries(metrics).forEach(([metric, cfg]) => {
+        new Chart(document.getElementById(cfg.canvasId), {
             type: 'doughnut',
-            plugins: [doughnutPercentLabels],
-            data: {
-                labels: selected.labels,
-                datasets: [{
-                    data: selected.values,
-                    backgroundColor: selected.colors,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '64%',
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-    }
-
-    function renderMetricValuesTable(metric) {
-        const item = datasetMap[metric];
-        const valuesBody = document.getElementById(dashboardCharts[metric].statsId);
-        const percentages = getPercentages(item.values);
-        const rows = item.labels.map(function (label, index) {
-            return '<tr>' +
-                '<th><span class="runtime-metric-name"><span class="tag is-light" style="background:' + item.colors[index] + '; width: 0.85rem; height: 0.85rem; border-radius: 9999px;"></span>' + label + '</span></th>' +
-                '<td><strong>' + formatMetricValue(metric, item.values[index]) + '</strong><span class="stats-percent">(' + percentages[index].toFixed(1) + '%)</span></td>' +
-                '</tr>';
+            plugins: [percentPlugin],
+            data: { labels: cfg.labels, datasets: [{ data: cfg.values, backgroundColor: cfg.colors, borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { display: false } } },
         });
 
-        valuesBody.innerHTML = rows.join('');
-    }
-
-    Object.keys(dashboardCharts).forEach(function (metric) {
-        createDoughnutChart(metric);
-        renderMetricValuesTable(metric);
+        const pcts = pct(cfg.values);
+        document.getElementById(cfg.statsId).innerHTML = cfg.labels.map((label, i) =>
+            `<tr><th><span class="runtime-metric-name"><span class="tag is-light" style="background:${cfg.colors[i]};width:.85rem;height:.85rem;border-radius:9999px"></span>${label}</span></th>` +
+            `<td><strong>${fmtVal(metric, cfg.values[i])}</strong><span class="stats-percent">(${pcts[i].toFixed(1)}%)</span></td></tr>`
+        ).join('');
     });
 </script>
 </body>
