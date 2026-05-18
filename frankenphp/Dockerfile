@@ -2,7 +2,7 @@
 # build with:
 #   time eatmydata docker buildx build --progress=plain --tag liguana/frankenphp .
 # run with:
-#   docker run --rm -it -p 9000:9000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
+#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
 #
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG PHP_VERSION=8.4.21
@@ -12,7 +12,7 @@ FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
 
 # set container timezone
 ENV TZ=America/Santiago
-ENV ENV=/root/.profile
+ENV ENV=/etc/profile
 
 # disable cgo checks
 ENV GODEBUG=cgocheck=0
@@ -27,15 +27,19 @@ RUN set -ex; \
         ca-certificates \
         coreutils \
         curl \
-        libcap \
         mailcap \
         musl \
         tree \
         tzdata \
     && \
     cp /usr/share/zoneinfo/America/Santiago /etc/localtime && \
-    echo 'alias ll="ls --color=auto -alF"' >> /root/.profile && \
-    echo 'alias ls="ls --color=auto -aF"' >> /root/.profile && \
+    install -d -m 0755 /etc/profile.d && \
+    printf '%s\n' \
+      'alias ll="ls --color=auto -alF"' \
+      'alias ls="ls --color=auto -aF"' \
+      > /etc/profile.d/10-aliases.sh && \
+    chmod 0644 /etc/profile.d/10-aliases.sh && \
+    ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh && \
     install-php-extensions \
         apcu \
         bcmath \
@@ -104,7 +108,7 @@ RUN set -ex; \
 
     frankenphp {
         num_threads 1
-        max_threads 4
+        max_threads auto
     }
 
     log {
@@ -128,7 +132,7 @@ RUN set -ex; \
 }
 
 # Main server block
-:80 {
+:8000 {
     # root directory
     root * /app/
 
@@ -139,12 +143,10 @@ RUN set -ex; \
     # static files
     @static {
         file
-        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.pdf *.txt
+        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.avif *.webp *.svg *.woff *.woff2 *.ttf *.eot *.pdf *.txt *.html
     }
-    handle @static {
-        header Cache-Control "public, max-age=86400"  # Cache for 24 hours
-        file_server
-    }
+    # cache static files for 24 hours
+    header @static Cache-Control "public, max-age=86400"
 
     # fonts files
     @fonts {
@@ -152,7 +154,7 @@ RUN set -ex; \
         path *.woff *.woff2 *.ttf *.eot
     }
     handle @fonts {
-        header Access-Control-Allow-Origin ""
+        header Access-Control-Allow-Origin "*"
         header Cache-Control "public, max-age=31536000, immutable"
         file_server
     }
@@ -164,7 +166,7 @@ RUN set -ex; \
     # deny all direct access for these folders
     @forbidden_dirs {
         file
-        path_regexp forbidden_dirs (?i)^/(?:.git|cache|bin|logs|backups|tests)(?:/|$)
+        path_regexp forbidden_dirs (?i)^/(?:\.git|cache|bin|logs|backups|tests)(?:/|$)
     }
     respond @forbidden_dirs "Forbidden: dirs" 403
 
@@ -178,41 +180,37 @@ RUN set -ex; \
     # deny access to sensitive files
     @sensitive_files {
         file
-        path_regexp sensitive_files (?i)^/.*(?:LICENSE.txt|composer.json|composer.lock|nginx.conf|web.config|htaccess.txt|.htaccess|.env)$
+        path_regexp sensitive_files (?i)^/.*(?:LICENSE\.txt|composer\.json|composer\.lock|nginx\.conf|web\.config|htaccess\.txt|\.htaccess|\.env)$
     }
     respond @sensitive_files "Forbidden: files" 403
 
     # deny access to specific file types in core system and vendor folders
     @blocked_core_scripts {
         file
-        path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+        path_regexp blocked_core_scripts (?i)^/(?:system|vendor)/(?:.*/)?[^/]+\.(?:txt|xml|md|yaml|yml|html|htm|shtml|shtm|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
     }
     respond @blocked_core_scripts "Forbidden: core" 403
 
     # deny access to specific file types in user folder
     @blocked_user_scripts {
         file
-        path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
+        path_regexp blocked_user_scripts (?i)^/user/(?:.*/)?[^/]+\.(?:txt|md|yaml|yml|php(?:[2-5])?|phar|phtml|pl|py|cgi|twig|sh|bat)$
     }
     respond @blocked_user_scripts "Forbidden: user" 403
 
     # -------------------------------------------------------------------------
     header {
         -Server
-        +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LiGUANA): https//liguana.disc.cl"
+        +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LiGUANA): https://liguana.disc.cl"
         +X-Powered-By "Departamento de Ingenieria de Sistemas y Computacion, UCN, Antofagasta"
     }
 
     # PHP handling
     php_server
 
-    # access logging with rotation
+    # access logging
     log {
-        output file /var/log/access.log {
-            roll_size 10MiB
-            roll_keep 10
-            roll_keep_for 168h  # 7 days
-        }
+        output stdout
         format json
     }
 
@@ -248,14 +246,16 @@ RUN set -ex; \
 # configuration
 RUN set -ex; \
     tree --du -h -I 'node_modules|vendor' && \
-    setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp && \
     frankenphp fmt --overwrite /etc/frankenphp/Caddyfile && \
     frankenphp version && \
     frankenphp build-info
 
 # copy the opcache.php to /app for testing
-COPY opcache.php /app/opcache.php
+COPY --chown=www-data:www-data opcache.php /app/opcache.php
+
+# run unprivileged
+USER www-data:www-data
 
 # serve
-EXPOSE 80
+EXPOSE 8000
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
