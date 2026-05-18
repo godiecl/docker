@@ -34,6 +34,7 @@ RUN set -ex; \
         curl \
         mailcap \
         musl \
+        ncdu \
         tree \
         tzdata \
     && \
