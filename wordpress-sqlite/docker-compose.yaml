@@ -1,10 +1,13 @@
 ---
-#  docker run -it --name wordpress --rm -p 9000:9000 -v ./wp-content:/app/wp-content liguana/wordpress
+#  docker run -it --name wordpress-sqlite --rm -p 9000:9000 -v ./wp-content:/app/wp-content liguana/wordpress-sqlite
 name: wordpress
 
 services:
-  wordpress:
-    image: liguana/wordpress
+  wordpress-sqlite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: liguana/wordpress-sqlite
     container_name: wordpress
     hostname: wordpress
     expose:
