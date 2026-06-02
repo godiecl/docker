@@ -9,6 +9,7 @@ ARG WORDPRESS_VERSION=6.9.4
 # --- wordpress ----------------------------------------------------------------
 # Wordpress
 FROM wordpress:${WORDPRESS_VERSION} AS wp
+
 # FrankenPHP
 FROM liguana/frankenphp:latest AS release
 ARG WORDPRESS_VERSION
@@ -41,10 +42,13 @@ RUN set -eux; \
         rm -f /tmp/sq.zip && \
     mv /app/wp-content/mu-plugins/sqlite-database-integration/db.copy /app/wp-content/db.php && \
         sed -i "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#/app/wp-content/mu-plugins/sqlite-database-integration#" /app/wp-content/db.php && \
-        sed -i "s#{SQLITE_PLUGIN}#sqlite-database-integration/load.php#" /app/wp-content/db.php
+        sed -i "s#{SQLITE_PLUGIN}#sqlite-database-integration/load.php#" /app/wp-content/db.php && \
+        chown -R www-data:www-data /app
 
 # run unprivileged
 USER www-data:www-data
 
-# set the port
+# serve
 EXPOSE 8000
+ENTRYPOINT ["frankenphp"]
+CMD ["run", "--config", "/etc/frankenphp/Caddyfile"]
