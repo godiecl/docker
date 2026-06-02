@@ -35,6 +35,7 @@ RUN set -ex; \
         ncdu \
         tree \
         tzdata \
+        unzip \
     && \
     cp /usr/share/zoneinfo/America/Santiago /etc/localtime && \
     install -d -m 0755 /etc/profile.d && \
