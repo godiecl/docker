@@ -274,7 +274,7 @@ ENV XDG_DATA_HOME=/tmp/caddy/data
 COPY --chown=www-data:www-data opcache.php /app/opcache.php
 
 # add healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -f http://localhost:8000/ping || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -fS http://localhost:8000/ping || exit 1
 
 # run unprivileged
 USER www-data:www-data
