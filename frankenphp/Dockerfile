@@ -246,6 +246,7 @@ COPY --chown=www-data:www-data opcache.php /app/opcache.php
 
 # ---- release stage: only the stripped filesystem ---------------------------------
 FROM scratch
+ARG PHP_VERSION
 
 COPY --from=builder / /
 
