@@ -7,8 +7,8 @@
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG PHP_VERSION=8.4.21
 
-# ---- release image -----------------------------------------------------------
-FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS release
+# ---- builder stage: install, configure, and strip ---------------------------------
+FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS builder
 
 # the labels
 LABEL org.opencontainers.image.title="FrankenPHP"
@@ -27,13 +27,11 @@ WORKDIR /app
 
 # install alpine packages and php extensions
 RUN set -ex; \
-    apk -U upgrade --verbose && \
     apk add --no-cache --verbose \
         ca-certificates \
         coreutils \
         curl \
         mailcap \
-        musl \
         ncdu \
         tree \
         tzdata \
@@ -46,7 +44,7 @@ RUN set -ex; \
       > /etc/profile.d/10-aliases.sh && \
     chmod 0644 /etc/profile.d/10-aliases.sh && \
     [ -f /etc/profile.d/color_prompt.sh.disabled ] && \
-      ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh || true && \
+        ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh || true && \
     install-php-extensions \
         apcu \
         bcmath \
@@ -58,9 +56,9 @@ RUN set -ex; \
         zip \
     && \
     echo '<?php phpinfo();' > /app/phpinfo.php && \
-    echo "<?php echo date("Y-m-d H:i:s");" > /app/index.php && \
-    cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini && \
-    rm -rf /var/cache/apk/* /tmp/* /app/public
+    echo '<?php echo date("Y-m-d H:i:s");' > /app/index.php && \
+    cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
+    rm -rf /var/cache/apk/* /tmp/*
 
 # write opcache config
 RUN set -ex; \
@@ -104,14 +102,11 @@ EOF
 
 # write frankenphp server config
 RUN set -ex; \
-    cat > /etc/frankenphp/Caddyfile <<-'EOF'
+    cat > /etc/frankenphp/Caddyfile <<-'CADDYEOF'
 {
     skip_install_trust
-
     auto_https off
     admin off
-
-    # debug
 
     frankenphp {
         num_threads 1
@@ -119,59 +114,45 @@ RUN set -ex; \
     }
 
     log {
-        format console # json
-        level info # debug info warn error fatal
+        # json
+        format console
+        # debug info warn error fatal
+        level info
     }
 
     servers {
-          # request timeout settings
-          timeouts {
-              read_body 1m
-              read_header 10s
-              write 1m
-              idle 1m
-          }
+        # request timeout settings
+        timeouts {
+            read_body 1m
+            read_header 10s
+            write 1m
+            idle 1m
+        }
     }
 }
 
 # Main server block
 :8000 {
-    # root directory
     root * /app/
 
     # health check endpoint
     respond /ping 204
 
-    # -------------------------------------------------------------------------
     # static files
     @static {
         file
         path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.avif *.webp *.svg *.woff *.woff2 *.ttf *.eot *.pdf *.txt *.html
     }
-    # cache static files for 24 hours
-    header @static {
-      header Cache-Control "public, max-age=86400"
-      file_server
-    }
-
-    # fonts files
-    @fonts {
-        file
-        path *.woff *.woff2 *.ttf *.eot
-    }
-    handle @fonts {
-        header Access-Control-Allow-Origin "*"
-        header Cache-Control "public, max-age=31536000, immutable"
+    handle @static {
+        header Cache-Control "public, max-age=86400"
         file_server
     }
 
-    # enable compression for better performance
     encode zstd br gzip
 
-    # -------------------------------------------------------------------------
     # deny all direct access for these folders
     @forbidden_dirs {
-      path_regexp forbidden_dirs (?i)^/(?:\.git|cache|bin|logs|backups|tests)(?:/|$)
+        path_regexp forbidden_dirs (?i)^/(?:\.git|cache|bin|logs|backups|tests)(?:/|$)
     }
     respond @forbidden_dirs "Forbidden: dirs" 403
 
@@ -205,44 +186,38 @@ RUN set -ex; \
 
     # protection for opcache.php
     basic_auth /opcache.php {
-      admin $2a$14$MDoST6iwAvmMnULwQjrwnuymGqtDJnHUKO3/GPeBY7BSqzC6gKYLK
+        admin $2a$14$MDoST6iwAvmMnULwQjrwnuymGqtDJnHUKO3/GPeBY7BSqzC6gKYLK
     }
 
     # protection for phpinfo.php
     basic_auth /phpinfo.php {
-      admin $2a$14$DLmcKyxU2rdNWCQBFmHncuCOu/Si7h3DUmqM.bWBGN8WyZE5rpDu2
+        admin $2a$14$DLmcKyxU2rdNWCQBFmHncuCOu/Si7h3DUmqM.bWBGN8WyZE5rpDu2
     }
 
-    # -------------------------------------------------------------------------
     header {
         -Server
         +X-Build-By "Laboratorio de Inteligencia Computacional Aplicada (LiGUANA): https://liguana.disc.cl"
         +X-Powered-By "Departamento de Ingenieria de Sistemas y Computacion, UCN, Antofagasta"
     }
 
-    # PHP handling
     php_server
 
-    # access logging
     log {
         output stdout
         format json
     }
 
-    # custom error handling
     handle_errors {
         @5xx expression {http.error.status_code} >= 500
         handle @5xx {
             respond `{http.error.status_code} Server Error` 500
         }
-
         handle {
             respond `{http.error.status_code} {http.error.status_text}`
         }
     }
-
 }
-EOF
+CADDYEOF
 
 # cleanup
 RUN set -ex; \
@@ -258,25 +233,51 @@ RUN set -ex; \
     rm -fr /usr/src/php.tar.xz*; \
     rm -fr /var/cache/apk/* /tmp/*
 
-# configuration
+# validate
 RUN set -ex; \
-mkdir -p /tmp/caddy/{config,data,locks} && \
+    mkdir -p /tmp/caddy/config /tmp/caddy/data /tmp/caddy/locks && \
     chown -R www-data:www-data /tmp/caddy && \
-    tree --du -h -I 'node_modules|vendor' && \
     frankenphp fmt --overwrite /etc/frankenphp/Caddyfile && \
     frankenphp version && \
     frankenphp build-info
 
-# copy the opcache.php to /app for testing
+# copy the opcache.php to /app
 COPY --chown=www-data:www-data opcache.php /app/opcache.php
 
-# run unprivileged
-USER www-data:www-data
+# ---- release stage: only the stripped filesystem ---------------------------------
+FROM scratch
+
+COPY --from=builder / /
+
+# the labels
+LABEL org.opencontainers.image.title="FrankenPHP"
+LABEL org.opencontainers.image.version="${PHP_VERSION}"
+LABEL org.opencontainers.image.authors="LiGUANA"
+
+# set container timezone
+ENV TZ=America/Santiago
+ENV ENV=/etc/profile
+
+# disable cgo checks
+ENV GODEBUG=cgocheck=0
+
+# set working directory
+WORKDIR /app
 
 # Caddy storage paths for unprivileged user
 ENV XDG_CONFIG_HOME=/tmp/caddy/config
 ENV XDG_DATA_HOME=/tmp/caddy/data
 
+# copy the opcache.php to /app for testing
+COPY --chown=www-data:www-data opcache.php /app/opcache.php
+
+# add healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -f http://localhost:8000/ping || exit 1
+
+# run unprivileged
+USER www-data:www-data
+
 # serve
 EXPOSE 8000
-CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
+ENTRYPOINT ["frankenphp"]
+CMD ["run", "--config", "/etc/frankenphp/Caddyfile"]
