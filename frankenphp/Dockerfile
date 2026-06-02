@@ -238,6 +238,7 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir -p /tmp/caddy/config /tmp/caddy/data /tmp/caddy/locks && \
     chown -R www-data:www-data /tmp/caddy && \
+    chown -R www-data:www-data /app && \
     frankenphp fmt --overwrite /etc/frankenphp/Caddyfile && \
     frankenphp version && \
     frankenphp build-info
