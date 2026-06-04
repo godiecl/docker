@@ -53,8 +53,6 @@ RUN set -ex; \
         exif \
         gd \
         intl \
-        pdo_sqlite \
-        sqlite3 \
         yaml \
         zip \
     && \
