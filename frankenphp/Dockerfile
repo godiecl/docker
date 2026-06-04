@@ -33,6 +33,8 @@ RUN set -ex; \
         curl \
         mailcap \
         ncdu \
+        pdo_sqlite \
+        sqlite3 \
         tree \
         tzdata \
         unzip \
