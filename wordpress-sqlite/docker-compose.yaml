@@ -11,9 +11,13 @@ services:
     container_name: wordpress
     hostname: wordpress
     expose:
-      - 9000
+      - 8000
     volumes:
-      - ./wp-content:/app/wp-content
+      - ./wp-content/database:/app/wp-content/database
+      - ./wp-content/uploads:/app/wp-content/uploads
+      - ./wp-content/plugins:/app/wp-content/plugins
+      - ./wp-content/themes:/app/wp-content/themes
+      - ./wordpress/wp-config.php:/app/wp-config.php:ro
     restart: unless-stopped
 
 networks:
