@@ -10,11 +10,6 @@ ARG PHP_VERSION=8.4.22
 # ---- builder stage: install, configure, and strip ---------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS builder
 
-# the labels
-LABEL org.opencontainers.image.title="FrankenPHP"
-LABEL org.opencontainers.image.version="${PHP_VERSION}"
-LABEL org.opencontainers.image.authors="LiGUANA"
-
 # set container timezone
 ENV TZ=America/Santiago
 ENV ENV=/etc/profile
