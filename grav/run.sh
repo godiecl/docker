@@ -10,6 +10,7 @@ log() { printf '%s\n' "$*" >&2; }
 CFG_DIR='/config'
 APP_DIR='/app'
 FRANKENPHP_BIN='frankenphp'
+FRANKENPHP_CONFIG="${FRANKENPHP_CONFIG:-/etc/frankenphp/Caddyfile}"
 SED_TARGET="$CFG_DIR/user/plugins/admin/admin.yaml"
 
 # ensure config dir exists and is writable
@@ -93,12 +94,6 @@ else
   log "Note: $SED_TARGET not found; skipping sed"
 fi
 
-# Set ownership if running as root and www-data exists (safe permission fix)
-if [[ "$(id -u)" -eq 0 ]] && id www-data >/dev/null 2>&1; then
-  log "Setting ownership to www-data:www-data for $APP_DIR and $CFG_DIR"
-  chown -R www-data:www-data "$APP_DIR" "$CFG_DIR" || log "chown failed (continuing)"
-fi
-
 # Execute final process (use exec so signals are forwarded)
 log "Starting $FRANKENPHP_BIN"
-exec "$FRANKENPHP_BIN" run --config /etc/frankenphp/Caddyfile
+exec "$FRANKENPHP_BIN" run --config "$FRANKENPHP_CONFIG"

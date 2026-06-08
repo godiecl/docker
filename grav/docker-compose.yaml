@@ -1,5 +1,5 @@
 ---
-#  docker run -it --name grav --rm -p 9000:9000 -v ./config:/config liguana/grav
+#  docker run -it --name grav --rm -p 8000:8000 -v ./config:/config liguana/grav
 name: grav
 
 services:
@@ -8,12 +8,12 @@ services:
     container_name: grav
     hostname: grav
     expose:
-      - 9000
+      - 8000
     volumes:
       - ./config:/config
     restart: unless-stopped
     healthcheck:
-      test: curl --fail http://localhost:9000/ping || exit 1
+      test: curl --fail http://localhost:8000/ping || exit 1
       interval: 30s
       retries: 3
       start_period: 10s
