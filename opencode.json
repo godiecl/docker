@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "formatter": true,
+  "plugin": ["oh-my-opencode-slim"],
+  "mcp": {
+    "idea": {
+      "type": "remote",
+      "url": "http://127.0.0.1:64342/sse",
+      "headers": {}
+    }
+  }
+}
