@@ -5,7 +5,7 @@
 #   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
 #
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
-ARG PHP_VERSION=8.4.21
+ARG PHP_VERSION=8.4.22
 
 # ---- builder stage: install, configure, and strip ---------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS builder
