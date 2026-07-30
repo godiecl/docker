@@ -5,7 +5,7 @@
 #   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp liguana/frankenphp
 #
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
-ARG PHP_VERSION=8.4.22
+ARG PHP_VERSION=8.5.8
 
 # ---- builder stage: install, configure, and strip ---------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS builder
@@ -265,9 +265,6 @@ WORKDIR /app
 # Caddy storage paths for unprivileged user
 ENV XDG_CONFIG_HOME=/tmp/caddy/config
 ENV XDG_DATA_HOME=/tmp/caddy/data
-
-# copy the opcache.php to /app for testing
-COPY --chown=www-data:www-data opcache.php /app/opcache.php
 
 # add healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -fS http://localhost:8000/ping || exit 1
