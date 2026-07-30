@@ -2,11 +2,11 @@
 # build with:
 #   time eatmydata docker buildx build --progress=plain --tag liguana/grav:2.0 .
 # run with:
-#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name grav liguana/grav
+#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name grav liguana/grav:2.0
 #
 # https://getgrav.org/downloads
-ARG GRAV_VERSION=2.0.0-rc.7?testing
-ARG FRANKENPHP_IMAGE=8.4.22
+ARG GRAV_VERSION=2.0.14
+ARG FRANKENPHP_IMAGE=8.5.8
 
 # -----------------------------------------------------------------------------
 # FrankenPHP + Grav
