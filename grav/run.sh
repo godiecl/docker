@@ -94,6 +94,15 @@ else
   log "Note: $SED_TARGET not found; skipping sed"
 fi
 
+# Block sensitive Grav data paths
+if ! grep -q '@gravBlocked' "$FRANKENPHP_CONFIG"; then
+    log "Adding Grav path blocks to Caddyfile"
+    sed -i '/respond @blocked_user_scripts "Forbidden: user" 403/a\
+\
+    @gravBlocked path_regexp /user/(accounts|config|env)/.* /user/data/.*\
+    respond @gravBlocked 403' "$FRANKENPHP_CONFIG"
+fi
+
 # Execute final process (use exec so signals are forwarded)
 log "Starting $FRANKENPHP_BIN"
 exec "$FRANKENPHP_BIN" run --config "$FRANKENPHP_CONFIG"
