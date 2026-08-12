@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 # build with:
-#   time eatmydata docker buildx build --progress=plain --tag liguana/frankenphp:8.5.9 .
+#   time eatmydata docker buildx build --progress=plain --tag liguana/frankenphp:8.4.24 .
 # run with:
-#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp liguana/frankenphp:8.5.9
+#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp liguana/frankenphp:8.4.24
 #
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
-ARG PHP_VERSION=8.5.9
+ARG PHP_VERSION=8.4.24
 
 # ---- builder stage: install, configure, and strip ---------------------------------
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS builder
@@ -227,6 +227,7 @@ RUN set -ex; \
     rm -fr /usr/local/lib/php/.channels; \
     rm -fr /usr/local/include/php; \
     rm -fr /usr/src/php.tar.xz*; \
+    rm -fr /etc/caddy; \
     rm -fr /var/cache/apk/* /tmp/*
 
 # validate
