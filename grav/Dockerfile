@@ -1,17 +1,17 @@
 # syntax=docker/dockerfile:1
 # build with:
-#   time eatmydata docker buildx build --progress=plain --tag liguana/grav:2.0.14 .
+#   time eatmydata docker buildx build --progress=plain --tag registry.liguana.cl/grav:2.0.14 .
 # run with:
-#   docker run --rm -it -p 8000:8000 -v /tmp/grav-config:/config --name grav liguana/grav:2.0.14
+#   docker run --rm -it -p 8000:8000 -v /tmp/grav-config:/config --name grav registry.liguana.cl/grav:2.0.14
 #
 # https://getgrav.org/downloads
-ARG GRAV_VERSION=2.0.14
-ARG FRANKENPHP_IMAGE=8.5.8
+ARG GRAV_VERSION=2.0.18
+ARG FRANKENPHP_IMAGE=8.4.24
 
 # -----------------------------------------------------------------------------
 # FrankenPHP + Grav
 # -----------------------------------------------------------------------------
-FROM liguana/frankenphp:${FRANKENPHP_IMAGE} AS release
+FROM registry.liguana.cl/frankenphp:${FRANKENPHP_IMAGE} AS release
 ARG GRAV_VERSION
 
 # the labels
