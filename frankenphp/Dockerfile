@@ -275,5 +275,4 @@ USER www-data:www-data
 
 # serve
 EXPOSE 8000
-ENTRYPOINT ["frankenphp"]
-CMD ["run", "--config", "/etc/frankenphp/Caddyfile"]
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
