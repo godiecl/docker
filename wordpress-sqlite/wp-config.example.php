@@ -3,13 +3,13 @@
 define('WP_DEBUG', true);
 
 // sqlite rulez!
-define('DATABASE_TYPE', 'sqlite');
-define('DB_DIR',         '/app/wp-content/database');
-define('DB_FILE',        'db.sqlite');
-define('DB_NAME',        'wordpress');
-define('FS_METHOD',      'direct');
-define('WP_SITEURL',     'https://localhost');
-define('WP_HOME',        'https://localhost');
+define('DB_ENGINE',    'sqlite');
+define('DB_DIR',       '/app/wp-content/database');
+define('DB_FILE',      'db.sqlite');
+define('DB_NAME',      'wordpress');
+define('FS_METHOD',    'direct');
+define('WP_SITEURL',   'https://localhost');
+define('WP_HOME',      'https://localhost');
 $_SERVER['HTTPS'] = 'on';
 
 define('AUTH_KEY',         'b(Ft7f1{4vZ(!(#w +QOW~LJk!Ta{W*Pd(E%;xm$6!AW!?fNm^qk7NoN4}DJz%<6');
