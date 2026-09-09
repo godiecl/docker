@@ -17,6 +17,21 @@ services:
       - ./wordpress/wp-config.php:/app/wp-config.php:ro
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: wordpress-redis
+    hostname: wordpress-redis
+    command: redis-server --save "" --appendonly no
+    expose:
+      - 6379
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
 networks:
   default:
     name: npm

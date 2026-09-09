@@ -51,6 +51,7 @@ RUN set -ex; \
         exif \
         gd \
         intl \
+        redis \
         yaml \
         zip \
     && \

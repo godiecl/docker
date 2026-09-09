@@ -8,6 +8,12 @@ define('DB_DIR',       '/app/wp-content/database');
 define('DB_FILE',      'db.sqlite');
 define('DB_NAME',      'wordpress');
 define('FS_METHOD',    'direct');
+
+// redis object cache (compose service `redis`, the redis-cache plugin sets the drop-in)
+define('WP_REDIS_HOST', 'wordpress-redis');
+define('WP_REDIS_PORT', 6379);
+define('WP_REDIS_TIMEOUT', 1);
+
 define('WP_SITEURL',   'https://localhost');
 define('WP_HOME',      'https://localhost');
 $_SERVER['HTTPS'] = 'on';
