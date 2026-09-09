@@ -3,10 +3,7 @@
 name: wordpress
 
 services:
-  wordpress-sqlite:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  wordpress:
     image: registry.liguana.cl/wp-sqlite:7.1
     container_name: wordpress
     hostname: wordpress
