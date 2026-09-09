@@ -1,31 +1,21 @@
 # Agent skills
 
 ## Coding Rules
-Never use ruff. Always use ty and/or pyrefly.
+
+* Never use ruff, instead use ty and/or pyrefly.
+* Do not preserve backward compatibility.
+* Choose the simplest implementation that fully meets the current requirements.
+* Prefer established, well-maintained libraries over custom implementations.
 
 ## Never Touch
-.env files - never read or modify
 
-<!-- codebase-memory-mcp:start -->
-## Codebase Knowledge Graph (codebase-memory-mcp)
+- .env files - never read or modify.
 
-This project uses codebase-memory-mcp to maintain a knowledge graph of the codebase.
+## Codebase Knowledge Graph (codebase-memory)
+
+This project uses skill codebase-memory (MCP) to maintain a knowledge graph of the codebase.
 ALWAYS prefer MCP graph tools over grep/glob/file-search for code discovery.
 
-### Priority Order
-1. `search_graph` â€” find functions, classes, routes, variables by pattern
-2. `trace_path` â€” trace who calls a function or what it calls
-3. `get_code_snippet` â€” read specific function/class source code
-4. `query_graph` â€” run Cypher queries for complex patterns
-5. `get_architecture` â€” high-level project summary
+## Write technical text
 
-### When to fall back to grep/glob
-- Searching for string literals, error messages, config values
-- Searching non-code files (Dockerfiles, shell scripts, configs)
-- When MCP tools return insufficient results
-
-### Examples
-- Find a handler: `search_graph(name_pattern=".*OrderHandler.*")`
-- Who calls it: `trace_path(function_name="OrderHandler", direction="inbound")`
-- Read source: `get_code_snippet(qualified_name="pkg/orders.OrderHandler")`
-<!-- codebase-memory-mcp:end -->
+Write or rewrite technical text with the rules of ASD-STE100 Simplified Technical English so it is clear, unambiguous, and free of AI slop. Use for documentation, READMEs, runbooks, procedures, error messages, release notes, incident reports, and API guides. Also use when the user says "STE", "Simplified Technical English", "ASD-STE100", "de-slop", "make this readable", "write for non-native readers", or asks for docs that translate well. Enforces the standard's 53 rules: 20/25-word sentence limits, one word one meaning, simple tenses, active voice, condition before command.
