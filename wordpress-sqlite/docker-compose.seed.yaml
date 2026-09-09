@@ -1,0 +1,20 @@
+---
+# Seed the default WordPress themes and plugins into the host wp-content dirs.
+# The bind mounts in docker-compose.yaml shadow the image's bundled content,
+# so run this once after the first `docker compose up`:
+#   docker compose -f docker-compose.seed.yaml run --rm seed
+services:
+  seed:
+    image: registry.liguana.cl/wp-sqlite:7.1
+    user: root
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >-
+        cp -a /app/wp-content/themes/. /mnt/themes/ &&
+        cp -a /app/wp-content/plugins/. /mnt/plugins/ &&
+        chown -R www-data:www-data /mnt/themes /mnt/plugins
+    volumes:
+      - ./wp-content/themes:/mnt/themes
+      - ./wp-content/plugins:/mnt/plugins
+    restart: "no"
