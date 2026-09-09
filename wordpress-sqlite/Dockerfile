@@ -31,6 +31,7 @@ RUN set -eux; \
     cd /tmp/sqlite/packages/php-ext-wp-mysql-parser && \
     PHP_CONFIG="$(command -v php-config)" \
     LIBCLANG_PATH="$(dirname "$(find /usr/lib -name 'libclang.so' | head -n1)")" \
+    BINDGEN_EXTRA_CLANG_ARGS="-isystem $(gcc -print-file-name=include)" \
     cargo build --release && \
     php -d "extension=$(pwd)/target/release/libwp_mysql_parser.so" -m | grep -q wp_mysql_parser
 
