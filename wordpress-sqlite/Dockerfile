@@ -4,7 +4,8 @@
 # run with:
 #   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name wp-sqlite registry.liguana.cl/wp-sqlite:7.1
 #
-ARG FRANKENPHP_VERSION=1.12.7-8.4.25
+ARG FRANKENPHP_VERSION=1.12.7
+ARG PHP_VERSION=8.4.25
 ARG WORDPRESS_VERSION=7.1
 ARG SQLITE_PLUGIN_VERSION=3.0.1
 
@@ -12,8 +13,26 @@ ARG SQLITE_PLUGIN_VERSION=3.0.1
 # Wordpress
 FROM wordpress:${WORDPRESS_VERSION} AS wp
 
-# FrankenPHP
-FROM registry.liguana.cl/frankenphp:${FRANKENPHP_VERSION} AS release
+# --- sqlite native parser extension builder -----------------------------------
+# The wp_mysql_parser PHP extension (Rust) accelerates the plugin MySQL lexer/parser.
+# It must be built against the exact PHP of the frankenphp base image;
+# that base is itself built from dunglas/frankenphp:<core>-php<php>-alpine.
+FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}-alpine AS sqlite-parser-ext
+ARG SQLITE_PLUGIN_VERSION
+
+RUN set -eux; \
+    apk add --no-cache build-base curl tar clang clang-libs rust cargo && \
+    mkdir -p /tmp/sqlite && \
+    curl -fsSL "https://github.com/WordPress/sqlite-database-integration/archive/refs/tags/v${SQLITE_PLUGIN_VERSION}.tar.gz" | \
+        tar xz --strip-components=1 -C /tmp/sqlite && \
+    cd /tmp/sqlite/packages/php-ext-wp-mysql-parser && \
+    PHP_CONFIG="$(command -v php-config)" \
+    LIBCLANG_PATH="$(dirname "$(find /usr/lib -name 'libclang*.so*' | head -n1)")" \
+    cargo build --release && \
+    php -d "extension=$(pwd)/target/release/libwp_mysql_parser.so" -m | grep -q wp_mysql_parser
+
+# --- FrankenPHP ---------------------------------------------------------------
+FROM registry.liguana.cl/frankenphp:${FRANKENPHP_VERSION}-${PHP_VERSION} AS release
 ARG WORDPRESS_VERSION
 ARG SQLITE_PLUGIN_VERSION
 
@@ -41,6 +60,12 @@ RUN set -eux; \
     sed -i "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#/app/wp-content/mu-plugins/sqlite-database-integration#" /app/wp-content/db.php && \
     sed -i "s#{SQLITE_PLUGIN}#sqlite-database-integration/load.php#" /app/wp-content/db.php && \
     chown -R www-data:www-data /app
+
+# enable the native MySQL parser extension (auto-detected by the plugin;
+# the pure-PHP lexer/parser remains the fallback)
+COPY --from=sqlite-parser-ext /tmp/sqlite/packages/php-ext-wp-mysql-parser/target/release/libwp_mysql_parser.so /usr/local/lib/php/extensions/wp_mysql_parser.so
+RUN set -eux; \
+    printf '%s\n' 'extension=/usr/local/lib/php/extensions/wp_mysql_parser.so' > "$PHP_INI_DIR/conf.d/wp_mysql_parser.ini"
 
 # run unprivileged
 USER www-data:www-data
