@@ -1,12 +1,14 @@
 # syntax=docker/dockerfile:1
 # build with:
-#   time eatmydata docker buildx build --progress=plain --tag registry.liguana.cl/frankenphp:1.12.7-8.4.24 .
+#   time eatmydata docker buildx build --progress=plain --tag registry.liguana.cl/frankenphp:1.12.7-8.4.25 .
+# publish with:
+#   docker push registry.liguana.cl/frankenphp:1.12.7-8.4.25
 # run with:
-#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp registry.liguana.cl/frankenphp:1.12.7-8.4.24
+#   docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name frankenphp registry.liguana.cl/frankenphp:1.12.7-8.4.25
 #
 # https://hub.docker.com/r/dunglas/frankenphp/tags?name=php
 ARG FRANKENPHP_VERSION=1.12.7
-ARG PHP_VERSION=8.4.24
+ARG PHP_VERSION=8.4.25
 
 # ---- builder stage: install, configure, and strip ---------------------------------
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}-alpine AS builder
