@@ -14,21 +14,22 @@ ARG SQLITE_PLUGIN_VERSION=3.0.1
 FROM wordpress:${WORDPRESS_VERSION} AS wp
 
 # --- sqlite native parser extension builder -----------------------------------
-# The wp_mysql_parser PHP extension (Rust) accelerates the plugin MySQL lexer/parser.
-# It must be built against the exact PHP of the frankenphp base image;
-# that base is itself built from dunglas/frankenphp:<core>-php<php>-alpine.
+# The wp_mysql_parser PHP extension (Rust) accelerates the plugin MySQL
+# lexer/parser. It must be built against the exact PHP of the frankenphp base
+# image; that base is itself built from dunglas/frankenphp:<core>-php<php>-alpine.
+# Note: /packages is export-ignore in the repo, so GitHub tarballs omit the
+# extension source; clone (git ignores export-ignore) with a sparse checkout.
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}-alpine AS sqlite-parser-ext
 ARG SQLITE_PLUGIN_VERSION
 
 RUN set -eux; \
-    apk add --no-cache build-base curl tar clang clang-libs rust cargo && \
-    mkdir -p /tmp/sqlite && \
-    curl -fsSL "https://github.com/WordPress/sqlite-database-integration/archive/refs/tags/v${SQLITE_PLUGIN_VERSION}.tar.gz" | \
-        tar xz --strip-components=1 -C /tmp/sqlite && \
+    apk add --no-cache build-base clang clang-libs rust cargo git && \
+    ln -sfn "$(find /usr/lib -name 'libclang.so.*' | head -n1)" /usr/lib/libclang.so && \
+    git clone --depth 1 --branch "v${SQLITE_PLUGIN_VERSION}" --filter=blob:none --sparse \
+        https://github.com/WordPress/sqlite-database-integration /tmp/sqlite && \
+    git -C /tmp/sqlite sparse-checkout set packages/php-ext-wp-mysql-parser && \
     cd /tmp/sqlite/packages/php-ext-wp-mysql-parser && \
-    PHP_CONFIG="$(command -v php-config)" \
-    LIBCLANG_PATH="$(dirname "$(find /usr/lib -name 'libclang*.so*' | head -n1)")" \
-    cargo build --release && \
+    PHP_CONFIG="$(command -v php-config)" LIBCLANG_PATH=/usr/lib cargo build --release && \
     php -d "extension=$(pwd)/target/release/libwp_mysql_parser.so" -m | grep -q wp_mysql_parser
 
 # --- FrankenPHP ---------------------------------------------------------------
