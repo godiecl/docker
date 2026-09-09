@@ -19,17 +19,19 @@ FROM wordpress:${WORDPRESS_VERSION} AS wp
 # image; that base is itself built from dunglas/frankenphp:<core>-php<php>-alpine.
 # Note: /packages is export-ignore in the repo, so GitHub tarballs omit the
 # extension source; clone (git ignores export-ignore) with a sparse checkout.
+# Note: Alpine splits libclang into clangNN-libclang; bump the NN with the base.
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}-alpine AS sqlite-parser-ext
 ARG SQLITE_PLUGIN_VERSION
 
 RUN set -eux; \
-    apk add --no-cache build-base clang clang-libs rust cargo git && \
-    ln -sfn "$(find /usr/lib -name 'libclang.so.*' | head -n1)" /usr/lib/libclang.so && \
+    apk add --no-cache build-base clang22-libclang rust cargo git && \
     git clone --depth 1 --branch "v${SQLITE_PLUGIN_VERSION}" --filter=blob:none --sparse \
         https://github.com/WordPress/sqlite-database-integration /tmp/sqlite && \
     git -C /tmp/sqlite sparse-checkout set packages/php-ext-wp-mysql-parser && \
     cd /tmp/sqlite/packages/php-ext-wp-mysql-parser && \
-    PHP_CONFIG="$(command -v php-config)" LIBCLANG_PATH=/usr/lib cargo build --release && \
+    PHP_CONFIG="$(command -v php-config)" \
+    LIBCLANG_PATH="$(dirname "$(find /usr/lib -name 'libclang.so' | head -n1)")" \
+    cargo build --release && \
     php -d "extension=$(pwd)/target/release/libwp_mysql_parser.so" -m | grep -q wp_mysql_parser
 
 # --- FrankenPHP ---------------------------------------------------------------
