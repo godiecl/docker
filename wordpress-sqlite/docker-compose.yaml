@@ -17,6 +17,8 @@ services:
       - ./wordpress/wp-config.php:/app/wp-config.php:ro
     restart: unless-stopped
 
+  # docker compose exec wordpress wp redis enable
+  # docker compose exec wordpress wp redis status
   redis:
     image: redis:7-alpine
     container_name: wordpress-redis
