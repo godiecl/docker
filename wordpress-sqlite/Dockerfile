@@ -71,7 +71,7 @@ RUN set -eux; \
 # the pure-PHP lexer/parser remains the fallback)
 COPY --from=sqlite-parser-ext /tmp/sqlite/packages/php-ext-wp-mysql-parser/target/release/libwp_mysql_parser.so /usr/local/lib/php/extensions/wp_mysql_parser.so
 RUN set -eux; \
-    printf '%s\n' 'extension=/usr/local/lib/php/extensions/wp_mysql_parser.so' > "$PHP_INI_DIR/conf.d/wp_mysql_parser.ini"
+    printf '%s\n' 'extension=/usr/local/lib/php/extensions/wp_mysql_parser.so' > /usr/local/etc/php/conf.d/wp_mysql_parser.ini
 
 # run unprivileged
 USER www-data:www-data
