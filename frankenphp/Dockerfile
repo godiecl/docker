@@ -183,14 +183,14 @@ RUN set -ex; \
     }
     respond @blocked_user_scripts "Forbidden: user" 403
 
-    # protection for opcache.php
+    # protection for opcache.php (opcache)
     basic_auth /opcache.php {
-        admin $2a$14$MDoST6iwAvmMnULwQjrwnuymGqtDJnHUKO3/GPeBY7BSqzC6gKYLK
+        admin $2a$14$aBc13rx0UBwF63Apb6jkxeynofGfc7VIBpkldEgC96Ndnxgc76CRy
     }
 
-    # protection for phpinfo.php
+    # protection for phpinfo.php (phpinfo)
     basic_auth /phpinfo.php {
-        admin $2a$14$DLmcKyxU2rdNWCQBFmHncuCOu/Si7h3DUmqM.bWBGN8WyZE5rpDu2
+        admin $2a$14$HFIdP3k3EnIuhVpebfQ.feIw47KxTVY07FCcEMOp5oIYSiNfnQqOy
     }
 
     header {
