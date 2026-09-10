@@ -20,13 +20,18 @@ USER root
 
 # install grav (bash needed for grav cli and run.sh)
 RUN set -eux; \
-    apk add --no-cache --verbose bash; \
+    apk add --no-cache bash; \
     mkdir -p /config; \
     curl -fSL -o /tmp/grav.zip "https://getgrav.org/download/core/grav-admin/${GRAV_VERSION}"; \
     unzip -q /tmp/grav.zip -d /tmp/grav; \
     cp -a /tmp/grav/grav-admin/. /app/; \
     rm -fr /tmp/grav /tmp/grav.zip; \
     chown -R www-data:www-data /app /config
+
+# block sensitive Grav data paths (baked in: /etc is not writable at runtime)
+RUN set -eux; \
+    sed -i 's#respond @blocked_user_scripts "Forbidden: user" 403#&\n\n    @gravBlocked path_regexp gravBlocked (?i)^/user/(?:accounts|config|env|data)(?:/|$)\n    respond @gravBlocked 403#' /etc/frankenphp/Caddyfile; \
+    frankenphp fmt --overwrite /etc/frankenphp/Caddyfile
 
 # startup script
 COPY --chown=www-data:www-data --chmod=0755 run.sh /app
