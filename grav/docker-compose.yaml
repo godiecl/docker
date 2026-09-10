@@ -1,10 +1,10 @@
 ---
-#  docker run -it --name grav --rm -p 8000:8000 -v ./config:/config liguana/grav
+#  docker run -it --name grav --rm -p 8000:8000 -v ./config:/config registry.liguana.cl/grav:2.0.26
 name: grav
 
 services:
   grav:
-    image: liguana/grav
+    image: registry.liguana.cl/grav:2.0.26
     container_name: grav
     hostname: grav
     expose:
@@ -13,10 +13,11 @@ services:
       - ./config:/config
     restart: unless-stopped
     healthcheck:
-      test: curl --fail http://localhost:8000/ping || exit 1
+      test: ["CMD", "curl", "-fS", "http://localhost:8000/ping"]
       interval: 30s
-      retries: 3
+      timeout: 5s
       start_period: 10s
+      retries: 3
 
 networks:
   default:
